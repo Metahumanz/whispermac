@@ -89,7 +89,12 @@ struct TranscriptionService {
                 if stream == .stdout, let segment = LiveSegmentParser.parse(line) {
                     await onSegment?(segment)
                 }
-                guard let filtered = CommandLogFilter.filteredLine(for: stream, tool: .whisper, line: line) else {
+                guard let filtered = CommandLogFilter.filteredLine(
+                    for: stream,
+                    tool: .whisper,
+                    line: line,
+                    vadEnabled: vadSettings.isEnabled
+                ) else {
                     return
                 }
                 await onLog("[whisper \(stream.label)] \(filtered)")

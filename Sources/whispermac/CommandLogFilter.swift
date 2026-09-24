@@ -1,7 +1,12 @@
 import Foundation
 
 enum CommandLogFilter {
-    static func filteredLine(for stream: ShellOutputStream, tool: CommandLogTool, line: String) -> String? {
+    static func filteredLine(
+        for stream: ShellOutputStream,
+        tool: CommandLogTool,
+        line: String,
+        vadEnabled: Bool = false
+    ) -> String? {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
@@ -9,6 +14,11 @@ enum CommandLogFilter {
         case .audioPreprocessor:
             return filteredAudioPreprocessorLine(stream: stream, line: trimmed)
         case .whisper:
+            if vadEnabled && trimmed == "whisper_backend_init_gpu: no GPU found" {
+                // whisper.cpp also initializes the CPU-only Silero backend;
+                // this message is not evidence that Whisper lost Metal.
+                return nil
+            }
             return filteredWhisperLine(stream: stream, line: trimmed)
         }
     }
@@ -69,6 +79,19 @@ enum CommandLogFilter {
         ]
 
         if usefulPrefixes.contains(where: { line.hasPrefix($0) }) || usefulFragments.contains(where: { line.contains($0) }) {
+            return line
+        }
+
+        let vadSummaryPrefixes = [
+            "whisper_vad_init_from_file_with_params: loading VAD model",
+            "whisper_vad_init_with_params: model type:",
+            "whisper_vad_init_with_params: model version:",
+            "whisper_vad_segments_from_probs: Final speech segments after filtering:",
+            "whisper_vad_detect_speech_no_reset: vad time =",
+        ]
+        let vadSummaryFragments = ["Reduced audio from", "reduced audio from", "audio reduction"]
+        if vadSummaryPrefixes.contains(where: { line.hasPrefix($0) }) ||
+            vadSummaryFragments.contains(where: { line.contains($0) }) {
             return line
         }
 

@@ -39,12 +39,12 @@ func vadSummaryAndFailureLinesAreKept() {
     #expect(CommandLogFilter.filteredLine(
         for: .stderr,
         tool: .whisper,
-        line: "whisper_vad_detect_speech: detected 8 speech segments, total speech duration 12.4 s"
+        line: "whisper_vad_segments_from_probs: Final speech segments after filtering: 8"
     ) != nil)
     #expect(CommandLogFilter.filteredLine(
         for: .stderr,
         tool: .whisper,
-        line: "VAD model version: Silero v6.2.0"
+        line: "whisper_vad_init_with_params: model version: 6.2.0"
     ) != nil)
     #expect(CommandLogFilter.filteredLine(
         for: .stderr,
@@ -58,6 +58,13 @@ func repetitiveVADWindowLinesAreFiltered() {
     #expect(CommandLogFilter.filteredLine(
         for: .stderr,
         tool: .whisper,
-        line: "whisper_vad_process: processing internal window 281"
+        line: "whisper_vad_segments_from_probs: VAD segment 281: start = 82.0, end = 83.0"
     ) == nil)
+}
+
+@Test
+func vadCPUBackendDoesNotLookLikeWhisperGPUFailure() {
+    let backendLine = "whisper_backend_init_gpu: no GPU found"
+    #expect(CommandLogFilter.filteredLine(for: .stderr, tool: .whisper, line: backendLine) == backendLine)
+    #expect(CommandLogFilter.filteredLine(for: .stderr, tool: .whisper, line: backendLine, vadEnabled: true) == nil)
 }

@@ -29,6 +29,22 @@ struct TaskPresentationTests {
     }
 
     @Test
+    func enabledVADWithMissingModelHasDedicatedReadiness() {
+        let state = TaskPresentation.mainContent(
+            isRunning: false,
+            isCancelling: false,
+            isDownloadingRuntime: false,
+            activePhase: nil,
+            lastOutcome: nil,
+            inputCount: 1,
+            blockingRuntimeComponents: [],
+            vadModelMissing: true,
+            vadModelPath: "/runtime/Models/ggml-silero-v6.2.0.bin"
+        )
+        #expect(state == .setup(.missingVADModel(path: "/runtime/Models/ggml-silero-v6.2.0.bin")))
+    }
+
+    @Test
     func emptyQueueWithMissingModelReportsBlocker() {
         let state = TaskPresentation.mainContent(
             isRunning: false,

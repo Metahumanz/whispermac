@@ -72,7 +72,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var lastRunOutputFiles: [URL] = []
     @Published var selectedResultFileID: URL?
 
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
     private var hasPresentedInitialRuntimePrompt = false
     private var transcriptionTask: Task<Void, Never>?
     private var runtimeDownloadTask: Task<Void, Never>?
@@ -82,9 +82,12 @@ final class AppModel: ObservableObject {
     private let completionNotifier: CompletionNotifier
     private var keepAwakeToken: KeepAwakeToken?
 
-    init(completionNotifier: CompletionNotifier = CompletionNotifier()) {
+    init(
+        completionNotifier: CompletionNotifier = CompletionNotifier(),
+        defaults: UserDefaults = .standard
+    ) {
         self.completionNotifier = completionNotifier
-        let defaults = UserDefaults.standard
+        self.defaults = defaults
         let guessed = PathResolver.guessDefaults()
         let storedWhisperCLIPath = defaults.string(forKey: Keys.whisperCLIPath) ?? ""
         let resolvedWhisperCLIPath = PathResolver.resolveWhisperCLIPath(storedWhisperCLIPath)

@@ -26,6 +26,27 @@ struct VADModelTests {
         #expect(try JSONDecoder().decode(VADSettings.self, from: data) == settings)
     }
 
+    @MainActor
+    @Test
+    func appModelPersistsAndRestoresVADSettings() {
+        let suiteName = "VADModelTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let model = AppModel(defaults: defaults)
+        model.vadSettings = VADSettings(
+            isEnabled: true,
+            modelPath: "/tmp/custom-silero.bin",
+            threshold: 0.7,
+            minSpeechDurationMs: 400,
+            minSilenceDurationMs: 650,
+            speechPadMs: 175
+        )
+
+        #expect(AppModel(defaults: defaults).vadSettings == model.vadSettings)
+    }
+
     @Test
     func automaticDiscoveryFindsPreferredModelName() throws {
         let root = try makeDirectory()

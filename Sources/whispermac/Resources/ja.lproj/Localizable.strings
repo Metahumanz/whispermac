@@ -229,3 +229,12 @@
 "vad.model_missing" = "Silero VAD モデルがありません：%@";
 "vad.model_missing_short" = "Silero VAD モデルがありません";
 "vad.download" = "Silero VAD をダウンロード";
+"log.enabled" = "有効";
+"log.disabled" = "無効";
+"log.vad_enabled" = "VAD: %@";
+"log.vad_model" = "モデル: %@（%@）";
+"log.vad_threshold" = "しきい値: %.2f";
+"log.vad_min_speech" = "最短音声: %lld ms";
+"log.vad_min_silence" = "最短無音: %lld ms";
+"log.vad_speech_pad" = "音声パディング: %lld ms";
+"error.vad_model_missing" = "Silero VAD モデルがないか無効です：%@";

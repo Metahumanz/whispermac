@@ -1,5 +1,15 @@
 import Foundation
 
+enum VADModelResolutionError: LocalizedError {
+    case missing(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .missing(let path): L.tr("error.vad_model_missing", path)
+        }
+    }
+}
+
 enum VADModelResolver {
     static let fileName = "ggml-silero-v6.2.0.bin"
     static let minimumBytes: Int64 = 800_000

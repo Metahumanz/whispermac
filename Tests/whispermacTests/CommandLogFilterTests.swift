@@ -33,3 +33,31 @@ func audioPreprocessorErrorLineIsKept() {
 
     #expect(filtered == "Error: cannot decode input file")
 }
+
+@Test
+func vadSummaryAndFailureLinesAreKept() {
+    #expect(CommandLogFilter.filteredLine(
+        for: .stderr,
+        tool: .whisper,
+        line: "whisper_vad_detect_speech: detected 8 speech segments, total speech duration 12.4 s"
+    ) != nil)
+    #expect(CommandLogFilter.filteredLine(
+        for: .stderr,
+        tool: .whisper,
+        line: "VAD model version: Silero v6.2.0"
+    ) != nil)
+    #expect(CommandLogFilter.filteredLine(
+        for: .stderr,
+        tool: .whisper,
+        line: "whisper_vad_process: failed to decode model"
+    ) != nil)
+}
+
+@Test
+func repetitiveVADWindowLinesAreFiltered() {
+    #expect(CommandLogFilter.filteredLine(
+        for: .stderr,
+        tool: .whisper,
+        line: "whisper_vad_process: processing internal window 281"
+    ) == nil)
+}

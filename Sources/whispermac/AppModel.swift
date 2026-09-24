@@ -529,6 +529,12 @@ final class AppModel: ObservableObject {
         var wasCancelled = false
 
         do {
+            if snapshot.vadSettings.isEnabled {
+                let vadURL = URL(fileURLWithPath: PathResolver.expandingTilde(snapshot.vadSettings.modelPath))
+                guard VADModelResolver.isValidModel(at: vadURL) else {
+                    throw VADModelResolutionError.missing(vadURL.path)
+                }
+            }
             modelPlan = try RuntimeModelResolver.prepare(
                 modelPath: snapshot.modelPath,
                 requestedMode: snapshot.accelerationMode
@@ -545,6 +551,14 @@ final class AppModel: ObservableObject {
         appendLog(L.tr("log.start_files", snapshot.inputFiles.count))
         appendLog(L.tr("log.requested_mode", snapshot.accelerationMode.title))
         appendLog(L.tr("log.effective_mode", modelPlan.effectiveMode.title))
+        appendLog(L.tr("log.vad_enabled", snapshot.vadSettings.isEnabled ? L.tr("log.enabled") : L.tr("log.disabled")))
+        if snapshot.vadSettings.isEnabled {
+            appendLog(L.tr("log.vad_model", "Silero v6.2.0", snapshot.vadSettings.modelPath))
+            appendLog(L.tr("log.vad_threshold", snapshot.vadSettings.threshold))
+            appendLog(L.tr("log.vad_min_speech", Int64(snapshot.vadSettings.minSpeechDurationMs)))
+            appendLog(L.tr("log.vad_min_silence", Int64(snapshot.vadSettings.minSilenceDurationMs)))
+            appendLog(L.tr("log.vad_speech_pad", Int64(snapshot.vadSettings.speechPadMs)))
+        }
         appendLog(L.tr("log.model_path", modelPlan.originalModelPath))
         if modelPlan.executionModelPath != modelPlan.originalModelPath {
             appendLog(L.tr("log.runtime_model_path", modelPlan.executionModelPath))
@@ -576,6 +590,7 @@ final class AppModel: ObservableObject {
                 formats: snapshot.outputFormats,
                 sourceLanguage: snapshot.sourceLanguage,
                 translatesToEnglish: snapshot.translatesToEnglish,
+                vadSettings: snapshot.vadSettings,
                 onInputStageChange: { [weak self] index, stage in
                     await MainActor.run {
                         guard let self else { return }

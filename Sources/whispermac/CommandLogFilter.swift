@@ -32,6 +32,8 @@ enum CommandLogFilter {
             "whisper_backend_init",
             "whisper_backend_init_gpu:",
             "whisper_print_progress_callback:",
+            "vad_model_load",
+            "vad_init",
             "ggml_metal_init:",
             "ggml_metal_device_init: GPU name:",
             "ggml_metal_device_init: found device:",
@@ -54,6 +56,16 @@ enum CommandLogFilter {
             "flash attn",
             "devices    =",
             "backends   =",
+            "vad model",
+            "vad_model",
+            "VAD version",
+            "vad version",
+            "VAD model",
+            "speech segments",
+            "speech duration",
+            "audio reduction",
+            "reduced audio",
+            "samples after VAD",
         ]
 
         if usefulPrefixes.contains(where: { line.hasPrefix($0) }) || usefulFragments.contains(where: { line.contains($0) }) {

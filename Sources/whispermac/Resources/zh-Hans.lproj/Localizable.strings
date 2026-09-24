@@ -229,3 +229,12 @@
 "vad.model_missing" = "缺少 Silero VAD 模型：%@";
 "vad.model_missing_short" = "缺少 Silero VAD 模型";
 "vad.download" = "下载 Silero VAD";
+"log.enabled" = "已启用";
+"log.disabled" = "已关闭";
+"log.vad_enabled" = "VAD: %@";
+"log.vad_model" = "模型: %@（%@）";
+"log.vad_threshold" = "阈值: %.2f";
+"log.vad_min_speech" = "最短语音: %lld ms";
+"log.vad_min_silence" = "最短静音: %lld ms";
+"log.vad_speech_pad" = "语音扩展: %lld ms";
+"error.vad_model_missing" = "Silero VAD 模型缺失或无效：%@";

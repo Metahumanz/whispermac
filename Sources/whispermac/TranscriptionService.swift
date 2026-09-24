@@ -15,6 +15,7 @@ struct TranscriptionService {
         formats: Set<OutputFormat>,
         sourceLanguage: String,
         translatesToEnglish: Bool,
+        vadSettings: VADSettings = .default,
         onInputStageChange: @escaping @Sendable (Int, TranscriptionStage) async -> Void,
         onStageChange: @escaping @Sendable (TranscriptionStage) async -> Void,
         onLog: @escaping @Sendable (String) async -> Void,
@@ -74,7 +75,8 @@ struct TranscriptionService {
             outputPrefixes: outputPrefixes.map(\.path),
             formats: formats,
             sourceLanguage: sourceLanguage,
-            translatesToEnglish: translatesToEnglish
+            translatesToEnglish: translatesToEnglish,
+            vadSettings: vadSettings
         )
 
         await onStageChange(.transcribing)

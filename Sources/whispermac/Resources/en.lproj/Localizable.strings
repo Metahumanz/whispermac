@@ -229,3 +229,12 @@
 "vad.model_missing" = "Silero VAD model is missing: %@";
 "vad.model_missing_short" = "Silero VAD model is missing";
 "vad.download" = "Download Silero VAD";
+"log.enabled" = "Enabled";
+"log.disabled" = "Disabled";
+"log.vad_enabled" = "VAD: %@";
+"log.vad_model" = "Model: %@ (%@)";
+"log.vad_threshold" = "Threshold: %.2f";
+"log.vad_min_speech" = "Minimum speech: %lld ms";
+"log.vad_min_silence" = "Minimum silence: %lld ms";
+"log.vad_speech_pad" = "Speech padding: %lld ms";
+"error.vad_model_missing" = "Silero VAD model is missing or invalid: %@";

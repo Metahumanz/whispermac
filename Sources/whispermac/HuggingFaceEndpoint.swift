@@ -8,7 +8,7 @@ enum HuggingFaceEndpoint {
     static let environmentVariableName = "WHISPERMAC_HF_ENDPOINT"
     static let storedValueDefaultsKey = "hfEndpoint"
     static let defaultBaseURL = URL(string: "https://huggingface.co")!
-    private static let repositoryPath = "ggerganov/whisper.cpp"
+    static let whisperRepository = "ggerganov/whisper.cpp"
 
     static func resolved() -> URL {
         resolved(
@@ -27,16 +27,16 @@ enum HuggingFaceEndpoint {
         return defaultBaseURL
     }
 
-    static func assetURL(fileName: String, baseURL: URL) -> URL {
+    static func assetURL(fileName: String, baseURL: URL, repository: String = whisperRepository) -> URL {
         baseURL
-            .appending(path: "\(repositoryPath)/resolve/main")
+            .appending(path: "\(repository)/resolve/main")
             .appending(path: fileName)
             .appending(queryItems: [URLQueryItem(name: "download", value: "true")])
     }
 
-    static func treeAPIURL(baseURL: URL) -> URL {
+    static func treeAPIURL(baseURL: URL, repository: String = whisperRepository) -> URL {
         baseURL
-            .appending(path: "api/models/\(repositoryPath)/tree/main")
+            .appending(path: "api/models/\(repository)/tree/main")
             .appending(queryItems: [URLQueryItem(name: "recursive", value: "true")])
     }
 

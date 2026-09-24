@@ -213,6 +213,15 @@ struct SetupWorkspaceView: View {
                     } else {
                         optionsForm
                     }
+                case let .missingVADModel(path):
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(L.tr("vad.model_missing", path))
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                        Button(L.tr("vad.download")) { model.downloadVADModel() }
+                            .buttonStyle(.borderedProminent)
+                        optionsForm
+                    }
                 case .ready:
                     optionsForm
                 }

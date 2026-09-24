@@ -226,3 +226,6 @@
 "history.empty" = "还没有成功记录。";
 "privacy.download" = "下载仅用于获取运行资源，转写仍在本机完成。";
 "options.translate" = "翻译";
+"vad.model_missing" = "缺少 Silero VAD 模型：%@";
+"vad.model_missing_short" = "缺少 Silero VAD 模型";
+"vad.download" = "下载 Silero VAD";

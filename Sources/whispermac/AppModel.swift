@@ -34,6 +34,13 @@ final class AppModel: ObservableObject {
     @Published var translatesToEnglish: Bool {
         didSet { store(translatesToEnglish, forKey: Keys.translatesToEnglish) }
     }
+    @Published var vadSettings: VADSettings {
+        didSet {
+            if let data = try? JSONEncoder().encode(vadSettings) {
+                defaults.set(data, forKey: Keys.vadSettings)
+            }
+        }
+    }
     @Published var logs: [String]
     @Published var isRunning = false
     @Published var isCancelling = false
@@ -44,6 +51,7 @@ final class AppModel: ObservableObject {
     @Published var currentStageDescription = ""
     @Published var currentTranscriptionProgress = 0.0
     @Published var isDownloadingRuntime = false
+    @Published private(set) var isDownloadingVADModel = false
     @Published var isRuntimeDownloadPromptPresented = false
     @Published var downloadedBytes: Int64 = 0
     @Published var downloadTotalBytes: Int64?
@@ -68,6 +76,7 @@ final class AppModel: ObservableObject {
     private var hasPresentedInitialRuntimePrompt = false
     private var transcriptionTask: Task<Void, Never>?
     private var runtimeDownloadTask: Task<Void, Never>?
+    private var vadDownloadTask: Task<Void, Never>?
     private var previewLoadGeneration = 0
     private lazy var historyStore = TranscriptionHistoryStore()
     private let completionNotifier: CompletionNotifier
@@ -94,6 +103,8 @@ final class AppModel: ObservableObject {
             selectedFormats = [.txt, .srt]
         }
         let storedSourceLanguage = defaults.string(forKey: Keys.sourceLanguage) ?? WhisperLanguage.autoCode
+        let storedVADSettings = defaults.data(forKey: Keys.vadSettings)
+            .flatMap { try? JSONDecoder().decode(VADSettings.self, from: $0) } ?? .default
         let initialSourceLanguage = WhisperLanguage.isSupported(storedSourceLanguage)
             ? storedSourceLanguage
             : WhisperLanguage.autoCode
@@ -107,6 +118,7 @@ final class AppModel: ObservableObject {
         outputFormats = selectedFormats
         sourceLanguage = initialSourceLanguage
         translatesToEnglish = defaults.bool(forKey: Keys.translatesToEnglish)
+        vadSettings = storedVADSettings
 
         logs = [
             L.tr("log.default_model"),
@@ -151,7 +163,9 @@ final class AppModel: ObservableObject {
             activePhase: activePhase,
             lastOutcome: lastOutcome,
             inputCount: inputFiles.count,
-            blockingRuntimeComponents: blockingRuntimeComponents
+            blockingRuntimeComponents: blockingRuntimeComponents,
+            vadModelMissing: vadSettings.isEnabled && resolvedVADModelPath.isEmpty,
+            vadModelPath: VADModelResolver.downloadedModelURL.path
         )
     }
 
@@ -162,7 +176,9 @@ final class AppModel: ObservableObject {
             inputCount: inputFiles.count,
             hasWhisperCLI: hasResolvableWhisperCLI,
             hasModel: hasResolvableModel,
-            outputFormatCount: outputFormats.count
+            outputFormatCount: outputFormats.count,
+            vadEnabled: vadSettings.isEnabled,
+            hasVADModel: !resolvedVADModelPath.isEmpty
         )
     }
 
@@ -194,6 +210,12 @@ final class AppModel: ObservableObject {
     var missingRuntimeComponents: Set<RuntimeComponent> {
         runtimeComponentsMissing(whisperCLIPath: whisperCLIPath, modelPath: modelPath)
     }
+
+    var resolvedVADModelPath: String {
+        VADModelResolver.resolve(vadSettings.modelPath)
+    }
+
+    var hasResolvableVADModel: Bool { !resolvedVADModelPath.isEmpty }
 
     var downloadableRuntimeComponents: Set<RuntimeComponent> {
         missingRuntimeComponents.subtracting([.whisperCLI])
@@ -309,6 +331,26 @@ final class AppModel: ObservableObject {
         PathResolver.invalidateCaches()
     }
 
+    func chooseVADModel() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = []
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.nameFieldStringValue = VADModelResolver.fileName
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        vadSettings.modelPath = url.path
+    }
+
+    func downloadVADModel() {
+        guard !isDownloadingVADModel else { return }
+        vadDownloadTask = Task { [weak self] in await self?.installVADModel() }
+    }
+
+    func cancelVADModelDownload() {
+        vadDownloadTask?.cancel()
+    }
+
     func openOutputDirectory() {
         let directoryPath = resolvedOutputDirectoryPath(for: inputFiles.first)
         guard !directoryPath.isEmpty else { return }
@@ -407,7 +449,12 @@ final class AppModel: ObservableObject {
             accelerationMode: accelerationMode,
             outputFormats: outputFormats,
             sourceLanguage: sourceLanguage,
-            translatesToEnglish: translatesToEnglish
+            translatesToEnglish: translatesToEnglish,
+            vadSettings: {
+                var settings = vadSettings
+                if settings.isEnabled { settings.modelPath = resolvedVADModelPath }
+                return settings
+            }()
         )
 
         // A new batch starts from a clean terminal slate; the previous run's
@@ -851,6 +898,36 @@ final class AppModel: ObservableObject {
         runtimeDownloadTask = nil
     }
 
+    private func installVADModel() async {
+        isDownloadingVADModel = true
+        downloadedBytes = 0
+        downloadTotalBytes = nil
+        statusText = L.tr("status.runtime_preparing_download")
+        do {
+            let path = try await RuntimeInstaller.installVADModel { [weak self] event in
+                await MainActor.run {
+                    guard let self else { return }
+                    switch event {
+                    case .status(let status): self.statusText = status
+                    case .log(let line): self.logs.append(line)
+                    case .progress(let bytes, let total):
+                        self.downloadedBytes = bytes
+                        self.downloadTotalBytes = total
+                    }
+                }
+            }
+            vadSettings.modelPath = path
+            statusText = L.tr("status.runtime_ready")
+        } catch is CancellationError {
+            statusText = L.tr("status.download_cancelled")
+        } catch {
+            logs.append(error.localizedDescription)
+            statusText = L.tr("status.runtime_download_failed")
+        }
+        isDownloadingVADModel = false
+        vadDownloadTask = nil
+    }
+
     private func appendLog(_ line: String) {
         logs.append(line)
     }
@@ -912,4 +989,5 @@ private enum Keys {
     static let outputFormats = "outputFormats"
     static let sourceLanguage = "sourceLanguage"
     static let translatesToEnglish = "translatesToEnglish"
+    static let vadSettings = "vadSettings"
 }

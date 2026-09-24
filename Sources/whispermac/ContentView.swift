@@ -486,6 +486,8 @@ struct PersistentActionBar: View {
             return L.tr("bar.reason.cli")
         case .missingModel:
             return L.tr("bar.reason.model")
+        case .missingVADModel:
+            return L.tr("vad.model_missing_short")
         case .noOutputFormats:
             return L.tr("bar.reason.formats")
         }

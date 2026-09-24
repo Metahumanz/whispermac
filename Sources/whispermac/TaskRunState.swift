@@ -32,6 +32,7 @@ enum TaskOutcome: Equatable {
 enum SetupReadiness: Equatable {
     case emptyQueue
     case missingRuntime(blockers: Set<RuntimeComponent>)
+    case missingVADModel(path: String)
     case ready
 }
 
@@ -52,6 +53,7 @@ enum StartDisabledReason: Equatable {
     case noInputFiles
     case missingWhisperCLI
     case missingModel
+    case missingVADModel
     case noOutputFormats
 }
 
@@ -64,7 +66,9 @@ enum TaskPresentation {
         activePhase: ActiveRunPhase?,
         lastOutcome: TaskOutcome?,
         inputCount: Int,
-        blockingRuntimeComponents: Set<RuntimeComponent>
+        blockingRuntimeComponents: Set<RuntimeComponent>,
+        vadModelMissing: Bool = false,
+        vadModelPath: String = VADModelResolver.downloadedModelURL.path
     ) -> MainContentState {
         if isRunning {
             if isCancelling {
@@ -92,6 +96,7 @@ enum TaskPresentation {
         // Blocking runtime components outrank the empty-queue hint: a first
         // launch without a model must lead with the fix, not the invitation.
         if blockingRuntimeComponents.isEmpty {
+            if vadModelMissing { return .setup(.missingVADModel(path: vadModelPath)) }
             return inputCount == 0 ? .setup(.emptyQueue) : .setup(.ready)
         }
         return .setup(.missingRuntime(blockers: blockingRuntimeComponents))
@@ -104,7 +109,9 @@ enum TaskPresentation {
         inputCount: Int,
         hasWhisperCLI: Bool,
         hasModel: Bool,
-        outputFormatCount: Int
+        outputFormatCount: Int,
+        vadEnabled: Bool = false,
+        hasVADModel: Bool = true
     ) -> StartDisabledReason? {
         if isRunning {
             return .running
@@ -124,6 +131,9 @@ enum TaskPresentation {
         if outputFormatCount == 0 {
             return .noOutputFormats
         }
+        if vadEnabled && !hasVADModel {
+            return .missingVADModel
+        }
         return nil
     }
 }
@@ -139,4 +149,5 @@ struct AppConfigurationSnapshot: Equatable {
     let outputFormats: Set<OutputFormat>
     let sourceLanguage: String
     let translatesToEnglish: Bool
+    let vadSettings: VADSettings
 }

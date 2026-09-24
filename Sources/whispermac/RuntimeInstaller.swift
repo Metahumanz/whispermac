@@ -44,6 +44,7 @@ enum RuntimeInstaller {
     private static let encoderArchiveFileName = "ggml-large-v3-turbo-encoder.mlmodelc.zip"
     private static let modelMinimumBytes: Int64 = 1_000_000_000
     private static let encoderArchiveMinimumBytes: Int64 = 10_000_000
+    private static let vadRepository = "ggml-org/whisper-vad"
 
     static func install(
         missing components: Set<RuntimeComponent>,
@@ -61,6 +62,45 @@ enum RuntimeInstaller {
 
         await emit(.log(L.tr("log.runtime_download_complete")), to: onEvent)
         return RuntimeInstallResult(modelPath: installedModelPath)
+    }
+
+    /// Downloads only the compact Silero VAD model; it does not touch the
+    /// Whisper model or Core ML encoder already installed on the machine.
+    static func installVADModel(
+        onEvent: (@Sendable (RuntimeInstallerEvent) async -> Void)? = nil
+    ) async throws -> String {
+        let modelsDirectory = PathResolver.downloadedRuntimeRoot
+            .appending(path: "Models", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
+        let baseURL = HuggingFaceEndpoint.resolved()
+        let digestSource = await fetchDigests(baseURL: baseURL, repository: vadRepository, onEvent: onEvent)
+        let modelURL = HuggingFaceEndpoint.assetURL(
+            fileName: VADModelResolver.fileName,
+            baseURL: baseURL,
+            repository: vadRepository
+        )
+        await emit(.status(L.tr("status.runtime_downloading_model")), to: onEvent)
+        await emit(.log(L.tr("log.runtime_download_source", modelURL.absoluteString)), to: onEvent)
+        let expectation = DownloadExpectation(
+            minimumBytes: VADModelResolver.minimumBytes,
+            expectedDigest: digestSource.digests[VADModelResolver.fileName],
+            requiredMagicBytes: DownloadExpectation.ggmlMagic
+        )
+        let downloadedURL = try await downloadVerified(
+            from: modelURL,
+            expectation: expectation,
+            digestSourceAvailable: digestSource.available,
+            onEvent: onEvent
+        )
+        let destination = modelsDirectory.appending(path: VADModelResolver.fileName)
+        do {
+            try replaceItem(at: destination, with: downloadedURL, executable: false)
+        } catch {
+            try? FileManager.default.removeItem(at: downloadedURL)
+            throw error
+        }
+        await emit(.log(L.tr("log.runtime_download_install", destination.path)), to: onEvent)
+        return destination.path
     }
 
     private static func installModelAssets(
@@ -142,10 +182,11 @@ enum RuntimeInstaller {
 
     private static func fetchDigests(
         baseURL: URL,
+        repository: String = HuggingFaceEndpoint.whisperRepository,
         onEvent: (@Sendable (RuntimeInstallerEvent) async -> Void)?
     ) async -> (digests: [String: String], available: Bool) {
         do {
-            let (data, response) = try await URLSession.shared.data(from: HuggingFaceEndpoint.treeAPIURL(baseURL: baseURL))
+            let (data, response) = try await URLSession.shared.data(from: HuggingFaceEndpoint.treeAPIURL(baseURL: baseURL, repository: repository))
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                 throw RuntimeInstallerError.invalidDownloadResponse(baseURL.absoluteString)
             }

@@ -1,5 +1,52 @@
 import Foundation
 
+struct VADSettings: Codable, Equatable, Sendable {
+    var isEnabled: Bool
+    var modelPath: String
+    var threshold: Double
+    var minSpeechDurationMs: Int
+    var minSilenceDurationMs: Int
+    var speechPadMs: Int
+
+    static let `default` = VADSettings()
+
+    init(
+        isEnabled: Bool = false,
+        modelPath: String = "",
+        threshold: Double = 0.5,
+        minSpeechDurationMs: Int = 250,
+        minSilenceDurationMs: Int = 500,
+        speechPadMs: Int = 200
+    ) {
+        self.isEnabled = isEnabled
+        self.modelPath = modelPath
+        self.threshold = Self.validatedThreshold(threshold)
+        self.minSpeechDurationMs = min(max(minSpeechDurationMs, 0), 10_000)
+        self.minSilenceDurationMs = min(max(minSilenceDurationMs, 0), 10_000)
+        self.speechPadMs = min(max(speechPadMs, 0), 5_000)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case isEnabled, modelPath, threshold, minSpeechDurationMs, minSilenceDurationMs, speechPadMs
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            isEnabled: try values.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? Self.default.isEnabled,
+            modelPath: try values.decodeIfPresent(String.self, forKey: .modelPath) ?? Self.default.modelPath,
+            threshold: try values.decodeIfPresent(Double.self, forKey: .threshold) ?? Self.default.threshold,
+            minSpeechDurationMs: try values.decodeIfPresent(Int.self, forKey: .minSpeechDurationMs) ?? Self.default.minSpeechDurationMs,
+            minSilenceDurationMs: try values.decodeIfPresent(Int.self, forKey: .minSilenceDurationMs) ?? Self.default.minSilenceDurationMs,
+            speechPadMs: try values.decodeIfPresent(Int.self, forKey: .speechPadMs) ?? Self.default.speechPadMs
+        )
+    }
+
+    private static func validatedThreshold(_ value: Double) -> Double {
+        value.isFinite ? min(max(value, 0), 1) : 0.5
+    }
+}
+
 enum OutputFormat: String, CaseIterable, Hashable, Sendable {
     case txt
     case srt

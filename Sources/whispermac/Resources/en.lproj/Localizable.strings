@@ -226,3 +226,6 @@
 "history.empty" = "No successful batches yet.";
 "privacy.download" = "The download only fetches runtime assets; transcription stays on this Mac.";
 "options.translate" = "Translate";
+"vad.model_missing" = "Silero VAD model is missing: %@";
+"vad.model_missing_short" = "Silero VAD model is missing";
+"vad.download" = "Download Silero VAD";

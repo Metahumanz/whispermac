@@ -226,3 +226,6 @@
 "history.empty" = "成功した記録はまだありません。";
 "privacy.download" = "ダウンロードは実行環境の取得のみが目的で、文字起こしはこの Mac 上で行われます。";
 "options.translate" = "翻訳";
+"vad.model_missing" = "Silero VAD モデルがありません：%@";
+"vad.model_missing_short" = "Silero VAD モデルがありません";
+"vad.download" = "Silero VAD をダウンロード";

@@ -346,7 +346,7 @@ final class AppModel: ObservableObject {
     }
 
     func downloadVADModel() {
-        guard !isDownloadingVADModel else { return }
+        guard !isBusy else { return }
         vadDownloadTask = Task { [weak self] in await self?.installVADModel() }
     }
 
@@ -409,7 +409,7 @@ final class AppModel: ObservableObject {
     }
 
     func startRuntimeDownload() {
-        guard !isDownloadingRuntime else { return }
+        guard !isBusy else { return }
         let missing = downloadableRuntimeComponents
         guard !missing.isEmpty else { return }
 

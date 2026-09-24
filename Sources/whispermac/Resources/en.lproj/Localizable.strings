@@ -238,3 +238,14 @@
 "log.vad_min_silence" = "Minimum silence: %lld ms";
 "log.vad_speech_pad" = "Speech padding: %lld ms";
 "error.vad_model_missing" = "Silero VAD model is missing or invalid: %@";
+"vad.title" = "Voice Activity Detection";
+"vad.enable" = "Enable Silero VAD";
+"vad.threshold" = "Threshold";
+"vad.advanced" = "Advanced settings";
+"vad.min_speech" = "Minimum speech duration";
+"vad.min_silence" = "Minimum silence duration";
+"vad.speech_pad" = "Speech padding";
+"vad.milliseconds" = "%lld ms";
+"vad.model_path" = "VAD Model";
+"vad.model_available" = "Model available: %@";
+"vad.summary" = "On · threshold %@ · minimum speech %@ ms · silence %@ ms · padding %@ ms";

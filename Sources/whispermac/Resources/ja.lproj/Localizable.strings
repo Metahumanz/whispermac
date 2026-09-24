@@ -238,3 +238,14 @@
 "log.vad_min_silence" = "最短無音: %lld ms";
 "log.vad_speech_pad" = "音声パディング: %lld ms";
 "error.vad_model_missing" = "Silero VAD モデルがないか無効です：%@";
+"vad.title" = "音声アクティビティ検出";
+"vad.enable" = "Silero VAD を有効にする";
+"vad.threshold" = "しきい値";
+"vad.advanced" = "詳細設定";
+"vad.min_speech" = "最短音声時間";
+"vad.min_silence" = "最短無音時間";
+"vad.speech_pad" = "音声前後の拡張";
+"vad.milliseconds" = "%lld ミリ秒";
+"vad.model_path" = "VAD モデル";
+"vad.model_available" = "モデルを利用できます：%@";
+"vad.summary" = "有効 · しきい値 %@ · 最短音声 %@ ミリ秒 · 最短無音 %@ ミリ秒 · 拡張 %@ ミリ秒";

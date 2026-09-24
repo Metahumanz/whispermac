@@ -625,6 +625,41 @@ struct SettingsSheet: View {
                     pathRow(title: L.tr("field.model_file"), text: $model.modelPath) {
                         model.chooseModel()
                     }
+                    pathRow(title: L.tr("vad.model_path"), text: $model.vadSettings.modelPath) {
+                        model.chooseVADModel()
+                    }
+                    HStack(spacing: 8) {
+                        StatusDot(color: model.hasResolvableVADModel ? Color(nsColor: .systemGreen) : Color(nsColor: .systemOrange))
+                        Text(model.hasResolvableVADModel
+                            ? L.tr("vad.model_available", URL(fileURLWithPath: model.resolvedVADModelPath).lastPathComponent)
+                            : L.tr("vad.model_missing_short"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Spacer()
+                        if model.isDownloadingVADModel {
+                            Button(L.tr("button.cancel_download"), role: .destructive) {
+                                model.cancelVADModelDownload()
+                            }
+                        } else if !model.hasResolvableVADModel {
+                            Button(L.tr("vad.download")) { model.downloadVADModel() }
+                                .disabled(model.isBusy)
+                        }
+                    }
+                    if model.isDownloadingVADModel {
+                        HStack(spacing: 12) {
+                            if let progress = model.downloadProgress {
+                                ProgressView(value: progress).frame(width: 200)
+                            } else {
+                                ProgressView().controlSize(.small)
+                            }
+                            Text(model.statusText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
                 }
                 .padding(.vertical, 4)
             }

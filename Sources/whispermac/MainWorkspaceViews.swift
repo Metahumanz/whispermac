@@ -176,6 +176,7 @@ struct SetupWorkspaceView: View {
     let readiness: SetupReadiness
     let openSettings: () -> Void
     @State private var showsFullOptions = false
+    @State private var isVADAdvancedExpanded = false
 
     private var missingBlockers: Set<RuntimeComponent> {
         if case let .missingRuntime(blockers) = readiness {
@@ -289,6 +290,7 @@ struct SetupWorkspaceView: View {
                 defaultsRow(L.tr("label.output_directory"), outputLocationDisplayText(model.outputDirectoryPath))
                 defaultsRow(L.tr("label.export_formats"), formatsSummaryText(model.outputFormats))
                 defaultsRow(L.tr("label.audio_language"), languageDisplayName(forCode: model.sourceLanguage))
+                defaultsRow(L.tr("vad.title"), model.vadSettings.isEnabled ? L.tr("common.on") : L.tr("common.off"))
             }
         }
     }
@@ -318,6 +320,10 @@ struct SetupWorkspaceView: View {
                 languageRow
                 translateRow
             }
+
+            Divider()
+
+            vadSection
 
             Divider()
 
@@ -425,6 +431,70 @@ struct SetupWorkspaceView: View {
         }
     }
 
+    private var vadSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader(title: L.tr("vad.title"))
+            Toggle(L.tr("vad.enable"), isOn: $model.vadSettings.isEnabled)
+                .disabled(model.isBusy)
+
+            if model.vadSettings.isEnabled {
+                HStack(spacing: 8) {
+                    StatusDot(color: model.hasResolvableVADModel ? semanticSuccessColor : semanticWarningColor)
+                    Text(model.hasResolvableVADModel
+                        ? L.tr("vad.model_available", URL(fileURLWithPath: model.resolvedVADModelPath).lastPathComponent)
+                        : L.tr("vad.model_missing_short"))
+                        .font(.caption)
+                        .foregroundStyle(model.hasResolvableVADModel ? AnyShapeStyle(.secondary) : AnyShapeStyle(semanticWarningColor))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if !model.hasResolvableVADModel {
+                        Button(L.tr("vad.download")) { model.downloadVADModel() }
+                            .buttonStyle(.link)
+                            .disabled(model.isBusy)
+                    }
+                }
+
+                LabeledRow(title: L.tr("vad.threshold")) {
+                    HStack(spacing: 12) {
+                        Slider(value: $model.vadSettings.threshold, in: 0...1, step: 0.05)
+                            .disabled(model.isBusy)
+                        Text(String(format: "%.2f", model.vadSettings.threshold))
+                            .font(.system(.caption, design: .monospaced))
+                            .frame(width: 42, alignment: .trailing)
+                    }
+                    .frame(maxWidth: 380)
+                }
+
+                DisclosureGroup(L.tr("vad.advanced"), isExpanded: $isVADAdvancedExpanded) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        vadDurationSlider(title: L.tr("vad.min_speech"), value: $model.vadSettings.minSpeechDurationMs, range: 0...2_000, step: 50)
+                        vadDurationSlider(title: L.tr("vad.min_silence"), value: $model.vadSettings.minSilenceDurationMs, range: 0...2_000, step: 50)
+                        vadDurationSlider(title: L.tr("vad.speech_pad"), value: $model.vadSettings.speechPadMs, range: 0...1_000, step: 25)
+                    }
+                    .padding(.top, 8)
+                }
+                .disabled(model.isBusy)
+            }
+        }
+    }
+
+    private func vadDurationSlider(title: String, value: Binding<Int>, range: ClosedRange<Double>, step: Double) -> some View {
+        LabeledRow(title: title) {
+            HStack(spacing: 12) {
+                Slider(
+                    value: Binding(get: { Double(value.wrappedValue) }, set: { value.wrappedValue = Int($0.rounded()) }),
+                    in: range,
+                    step: step
+                )
+                .disabled(model.isBusy)
+                Text(L.tr("vad.milliseconds", Int64(value.wrappedValue)))
+                    .font(.system(.caption, design: .monospaced))
+                    .frame(width: 64, alignment: .trailing)
+            }
+            .frame(maxWidth: 380)
+        }
+    }
+
     private var accelerationRow: some View {
         LabeledRow(title: L.tr("label.acceleration_mode")) {
             HStack(spacing: 12) {
@@ -449,7 +519,13 @@ struct SetupWorkspaceView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: L.tr("ready.title"))
 
-            if missingBlockers.isEmpty {
+            if model.vadSettings.isEnabled && !model.hasResolvableVADModel {
+                readinessWarningRow(text: L.tr("vad.model_missing_short")) {
+                    Button(L.tr("vad.download")) { model.downloadVADModel() }
+                        .buttonStyle(.bordered)
+                        .disabled(model.isBusy)
+                }
+            } else if missingBlockers.isEmpty {
                 if model.inputFiles.isEmpty {
                     HStack(spacing: 8) {
                         StatusDot(color: semanticWarningColor)
@@ -747,6 +823,7 @@ struct RunWorkspaceView: View {
                     L.tr("label.acceleration_mode"),
                     effectiveAccelerationText(snapshot)
                 )
+                snapshotRow(L.tr("vad.title"), vadSummary(snapshot.vadSettings))
             }
             .padding(.top, 8)
         } label: {
@@ -770,6 +847,17 @@ struct RunWorkspaceView: View {
     private func effectiveAccelerationText(_ snapshot: AppConfigurationSnapshot) -> String {
         let effectiveTitle = model.runEffectiveMode?.title ?? snapshot.accelerationMode.title
         return L.tr("options.acceleration.effective", effectiveTitle)
+    }
+
+    private func vadSummary(_ settings: VADSettings) -> String {
+        guard settings.isEnabled else { return L.tr("common.off") }
+        return L.tr(
+            "vad.summary",
+            String(format: "%.2f", settings.threshold),
+            String(settings.minSpeechDurationMs),
+            String(settings.minSilenceDurationMs),
+            String(settings.speechPadMs)
+        )
     }
 
     private func summaryLine(_ snapshot: AppConfigurationSnapshot) -> String {

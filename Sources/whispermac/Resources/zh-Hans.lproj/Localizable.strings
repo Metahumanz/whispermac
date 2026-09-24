@@ -238,3 +238,14 @@
 "log.vad_min_silence" = "最短静音: %lld ms";
 "log.vad_speech_pad" = "语音扩展: %lld ms";
 "error.vad_model_missing" = "Silero VAD 模型缺失或无效：%@";
+"vad.title" = "语音活动检测";
+"vad.enable" = "启用 Silero VAD";
+"vad.threshold" = "阈值";
+"vad.advanced" = "高级设置";
+"vad.min_speech" = "最短语音时长";
+"vad.min_silence" = "最短静音时长";
+"vad.speech_pad" = "语音前后扩展";
+"vad.milliseconds" = "%lld 毫秒";
+"vad.model_path" = "VAD 模型";
+"vad.model_available" = "模型可用：%@";
+"vad.summary" = "已启用 · 阈值 %@ · 最短语音 %@ 毫秒 · 最短静音 %@ 毫秒 · 扩展 %@ 毫秒";

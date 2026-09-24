@@ -159,7 +159,7 @@ final class AppModel: ObservableObject {
         TaskPresentation.mainContent(
             isRunning: isRunning,
             isCancelling: isCancelling,
-            isDownloadingRuntime: isDownloadingRuntime,
+            isDownloadingRuntime: isDownloadingRuntime || isDownloadingVADModel,
             activePhase: activePhase,
             lastOutcome: lastOutcome,
             inputCount: inputFiles.count,
@@ -172,7 +172,7 @@ final class AppModel: ObservableObject {
     var startDisabledReason: StartDisabledReason? {
         TaskPresentation.startDisabledReason(
             isRunning: isRunning,
-            isDownloadingRuntime: isDownloadingRuntime,
+            isDownloadingRuntime: isDownloadingRuntime || isDownloadingVADModel,
             inputCount: inputFiles.count,
             hasWhisperCLI: hasResolvableWhisperCLI,
             hasModel: hasResolvableModel,
@@ -188,7 +188,7 @@ final class AppModel: ObservableObject {
     }
 
     var isBusy: Bool {
-        isRunning || isDownloadingRuntime
+        isRunning || isDownloadingRuntime || isDownloadingVADModel
     }
 
     var outputDirectoryDisplayText: String {

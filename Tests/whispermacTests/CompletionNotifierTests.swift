@@ -120,7 +120,7 @@ struct CompletionNotifierTests {
         #expect(await spy.posted.count == 1)
     }
 
-    @Test(arguments: ["en", "zh-hans", "ja"])
+    @Test(arguments: ["en", "zh-Hans", "ja"])
     func notificationKeysResolveInEveryLocalization(identifier: String) throws {
         let path = try #require(Bundle.module.path(forResource: identifier, ofType: "lproj"))
         let bundle = try #require(Bundle(path: path))

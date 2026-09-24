@@ -68,7 +68,7 @@ struct LocalizationTests {
     }
 }
 
-private let allLocalizationIdentifiers = ["en", "zh-hans", "ja"]
+private let allLocalizationIdentifiers = ["en", "zh-Hans", "ja"]
 
 private func localizationKeys(for identifier: String) throws -> Set<String> {
     let path = try #require(
@@ -87,7 +87,7 @@ func localizationKeysHaveParityAcrossAllBundles() throws {
         keySets[identifier] = try localizationKeys(for: identifier)
     }
 
-    #expect(keySets["en"] == keySets["zh-hans"])
+    #expect(keySets["en"] == keySets["zh-Hans"])
     #expect(keySets["en"] == keySets["ja"])
 }
 

@@ -566,6 +566,7 @@ final class AppModel: ObservableObject {
         currentTranscriptionProgress = 0
         activePhase = .preparingInputs(currentIndex: 0, total: snapshot.inputFiles.count)
         runEffectiveMode = nil
+        runCoreMLStatus = .notRequested
 
         let service = TranscriptionService()
         let modelPlan: RuntimeModelPlan

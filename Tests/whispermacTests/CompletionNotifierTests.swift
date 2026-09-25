@@ -122,8 +122,7 @@ struct CompletionNotifierTests {
 
     @Test(arguments: ["en", "zh-Hans", "ja"])
     func notificationKeysResolveInEveryLocalization(identifier: String) throws {
-        let path = try #require(Bundle.module.path(forResource: identifier, ofType: "lproj"))
-        let bundle = try #require(Bundle(path: path))
+        let strings = try localizedStrings(for: identifier)
 
         for key in [
             "notification.title.success",
@@ -131,7 +130,7 @@ struct CompletionNotifierTests {
             "notification.title.failed",
             "notification.body.failed",
         ] {
-            let value = bundle.localizedString(forKey: key, value: "", table: "Localizable")
+            let value = strings[key] ?? ""
             #expect(!value.isEmpty, "\(key) is empty in \(identifier)")
             #expect(value != key, "\(key) is missing from \(identifier)")
         }

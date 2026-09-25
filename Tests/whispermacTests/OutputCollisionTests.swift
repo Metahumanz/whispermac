@@ -213,9 +213,8 @@ func batchPrefixSeamAssignsDistinctPrefixesForSameStemInputs() async throws {
 
 @Test(arguments: ["en", "zh-Hans", "ja"])
 func outputRenamedLogKeyIsLocalizedInEveryBundle(language: String) throws {
-    let lprojPath = try #require(Bundle.module.path(forResource: language, ofType: "lproj"))
-    let bundle = try #require(Bundle(path: lprojPath))
-    let value = bundle.localizedString(forKey: "log.output_renamed", value: "", table: "Localizable")
+    let strings = try localizedStrings(for: language)
+    let value = try #require(strings["log.output_renamed"])
     #expect(!value.isEmpty)
     #expect(value.contains("%@"))
 }

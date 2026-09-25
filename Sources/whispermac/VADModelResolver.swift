@@ -13,6 +13,8 @@ enum VADModelResolutionError: LocalizedError {
 enum VADModelResolver {
     static let fileName = "ggml-silero-v6.2.0.bin"
     static let minimumBytes: Int64 = 800_000
+    static let maximumBytes: Int64 = 100_000_000
+    static let requiredHeader = Data("lmgg\n\0\0\0silero-".utf8)
 
     static var downloadedModelURL: URL {
         PathResolver.downloadedRuntimeRoot
@@ -44,6 +46,9 @@ enum VADModelResolver {
               let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let size = (attributes[.size] as? NSNumber)?.int64Value
         else { return false }
-        return size >= minimumBytes
+        guard size >= minimumBytes, size <= maximumBytes,
+              let data = try? Data(contentsOf: url, options: .mappedIfSafe)
+        else { return false }
+        return data.prefix(requiredHeader.count).elementsEqual(requiredHeader)
     }
 }

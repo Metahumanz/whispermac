@@ -84,7 +84,7 @@ enum RuntimeInstaller {
         let expectation = DownloadExpectation(
             minimumBytes: VADModelResolver.minimumBytes,
             expectedDigest: digestSource.digests[VADModelResolver.fileName],
-            requiredMagicBytes: DownloadExpectation.ggmlMagic
+            requiredMagicBytes: VADModelResolver.requiredHeader
         )
         let downloadedURL = try await downloadVerified(
             from: modelURL,

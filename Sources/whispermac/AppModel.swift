@@ -567,7 +567,8 @@ final class AppModel: ObservableObject {
         appendLog(L.tr("log.effective_mode", modelPlan.effectiveMode.title))
         appendLog(L.tr("log.vad_enabled", snapshot.vadSettings.isEnabled ? L.tr("log.enabled") : L.tr("log.disabled")))
         if snapshot.vadSettings.isEnabled {
-            appendLog(L.tr("log.vad_model", "Silero v6.2.0", snapshot.vadSettings.modelPath))
+            let vadModelName = URL(fileURLWithPath: snapshot.vadSettings.modelPath).lastPathComponent
+            appendLog(L.tr("log.vad_model", vadModelName, snapshot.vadSettings.modelPath))
             appendLog(L.tr("log.vad_threshold", snapshot.vadSettings.threshold))
             appendLog(L.tr("log.vad_min_speech", Int64(snapshot.vadSettings.minSpeechDurationMs)))
             appendLog(L.tr("log.vad_min_silence", Int64(snapshot.vadSettings.minSilenceDurationMs)))

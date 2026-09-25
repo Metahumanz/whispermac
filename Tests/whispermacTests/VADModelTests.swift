@@ -67,6 +67,25 @@ struct VADModelTests {
     }
 
     @Test
+    func modelValidationRequiresSileroGGMLHeaderAndPlausibleSize() throws {
+        let root = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let wrongModel = root.appending(path: "whisper-model.bin")
+        var whisperHeader = DownloadExpectation.ggmlMagic
+        whisperHeader.append(Data(repeating: 0, count: Int(VADModelResolver.minimumBytes) - whisperHeader.count))
+        try whisperHeader.write(to: wrongModel)
+        #expect(!VADModelResolver.isValidModel(at: wrongModel))
+
+        let oversizedModel = root.appending(path: "oversized.bin")
+        try VADModelResolver.requiredHeader.write(to: oversizedModel)
+        let oversizedHandle = try FileHandle(forWritingTo: oversizedModel)
+        try oversizedHandle.truncate(atOffset: UInt64(VADModelResolver.maximumBytes + 1))
+        try oversizedHandle.close()
+        #expect(!VADModelResolver.isValidModel(at: oversizedModel))
+    }
+
+    @Test
     func vadDownloadURLUsesOfficialRepositoryAndAsset() {
         let url = HuggingFaceEndpoint.assetURL(
             fileName: VADModelResolver.fileName,
@@ -107,7 +126,7 @@ struct VADModelTests {
     }
 
     private func writeValidModel(to url: URL) throws {
-        var data = DownloadExpectation.ggmlMagic
+        var data = VADModelResolver.requiredHeader
         data.append(Data(repeating: 0, count: Int(VADModelResolver.minimumBytes) - data.count))
         try data.write(to: url)
     }

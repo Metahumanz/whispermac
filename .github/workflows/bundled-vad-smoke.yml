@@ -1,6 +1,9 @@
 name: Bundled VAD transcription smoke test
 
 on:
+  push:
+    branches:
+      - feat/silero-vad
   workflow_dispatch:
 
 permissions:
@@ -16,7 +19,7 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 180
     env:
-      MODEL_CACHE: ${{ runner.temp }}/whispermac-model-cache
+      MODEL_CACHE: ${{ github.workspace }}/.cache/whispermac-model-cache
       MODEL_FILE: ggml-large-v3-turbo.bin
       ENCODER_ARCHIVE: ggml-large-v3-turbo-encoder.mlmodelc.zip
       VAD_FILE: ggml-silero-v6.2.0.bin
@@ -41,7 +44,7 @@ jobs:
         id: models-cache
         uses: actions/cache@v4
         with:
-          path: ${{ runner.temp }}/whispermac-model-cache
+          path: ${{ github.workspace }}/.cache/whispermac-model-cache
           key: whispermac-vad-model-assets-v1-macos-arm64
 
       - name: Download model assets on cache miss

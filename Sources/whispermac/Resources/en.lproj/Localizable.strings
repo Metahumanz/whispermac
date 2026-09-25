@@ -229,6 +229,9 @@
 "vad.model_missing" = "Silero VAD model is missing: %@";
 "vad.model_missing_short" = "Silero VAD model is missing";
 "vad.download" = "Download Silero VAD";
+"vad.cli_checking" = "Checking whether the selected whisper-cli supports VAD…";
+"vad.cli_supported" = "The selected whisper-cli supports VAD.";
+"vad.cli_unsupported" = "This whisper-cli does not support VAD. Choose a compatible newer CLI in Settings.";
 "log.enabled" = "Enabled";
 "log.disabled" = "Disabled";
 "log.vad_enabled" = "VAD: %@";

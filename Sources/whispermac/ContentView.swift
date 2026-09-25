@@ -488,6 +488,10 @@ struct PersistentActionBar: View {
             return L.tr("bar.reason.model")
         case .missingVADModel:
             return L.tr("vad.model_missing_short")
+        case .checkingVADCLI:
+            return L.tr("vad.cli_checking")
+        case .unsupportedVADCLI:
+            return L.tr("vad.cli_unsupported")
         case .noOutputFormats:
             return L.tr("bar.reason.formats")
         }
@@ -622,6 +626,12 @@ struct SettingsSheet: View {
                     pathRow(title: L.tr("field.whisper_cli"), text: $model.whisperCLIPath) {
                         model.chooseWhisperCLI()
                     }
+                    if model.vadSettings.isEnabled {
+                        Text(vadCLICapabilityMessage)
+                            .font(.caption)
+                            .foregroundStyle(model.vadCLICapability == .unsupported ? Color(nsColor: .systemOrange) : .secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     pathRow(title: L.tr("field.model_file"), text: $model.modelPath) {
                         model.chooseModel()
                     }
@@ -715,6 +725,14 @@ struct SettingsSheet: View {
         }
         .padding(24)
         .frame(width: 640, alignment: .topLeading)
+    }
+
+    private var vadCLICapabilityMessage: String {
+        switch model.vadCLICapability {
+        case .unchecked, .checking: L.tr("vad.cli_checking")
+        case .supported: L.tr("vad.cli_supported")
+        case .unsupported: L.tr("vad.cli_unsupported")
+        }
     }
 
     @ViewBuilder private var downloadStatusRow: some View {

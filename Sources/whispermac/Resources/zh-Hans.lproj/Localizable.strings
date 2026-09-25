@@ -229,6 +229,9 @@
 "vad.model_missing" = "缺少 Silero VAD 模型：%@";
 "vad.model_missing_short" = "缺少 Silero VAD 模型";
 "vad.download" = "下载 Silero VAD";
+"vad.cli_checking" = "正在检查所选 whisper-cli 是否支持 VAD…";
+"vad.cli_supported" = "所选 whisper-cli 支持 VAD。";
+"vad.cli_unsupported" = "此 whisper-cli 不支持 VAD。请在设置中选择兼容的新版本 CLI。";
 "log.enabled" = "已启用";
 "log.disabled" = "已关闭";
 "log.vad_enabled" = "VAD: %@";

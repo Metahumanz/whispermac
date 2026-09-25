@@ -14,6 +14,40 @@ struct TaskPresentationTests {
         #expect(TaskPresentation.activeDownload(isDownloadingRuntime: false, isDownloadingVADModel: false) == nil)
     }
 
+    @Test
+    func enabledVADBlocksUntilSelectedCLIIsVerifiedCompatible() {
+        let common: (WhisperCLICapability) -> StartDisabledReason? = { capability in
+            TaskPresentation.startDisabledReason(
+                isRunning: false,
+                isDownloadingRuntime: false,
+                inputCount: 1,
+                hasWhisperCLI: true,
+                hasModel: true,
+                outputFormatCount: 1,
+                vadEnabled: true,
+                hasVADModel: true,
+                vadCLICapability: capability
+            )
+        }
+        #expect(common(.checking) == .checkingVADCLI)
+        #expect(common(.unsupported) == .unsupportedVADCLI)
+        #expect(common(.supported) == nil)
+    }
+
+    @Test
+    func vadOffDoesNotDependOnCLICapabilityCheck() {
+        #expect(TaskPresentation.startDisabledReason(
+            isRunning: false,
+            isDownloadingRuntime: false,
+            inputCount: 1,
+            hasWhisperCLI: true,
+            hasModel: true,
+            outputFormatCount: 1,
+            vadEnabled: false,
+            vadCLICapability: .unsupported
+        ) == nil)
+    }
+
 
     private static let noBlockers: Set<RuntimeComponent> = []
     private static let cliMissing: Set<RuntimeComponent> = [.whisperCLI]

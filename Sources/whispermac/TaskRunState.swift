@@ -59,6 +59,8 @@ enum StartDisabledReason: Equatable {
     case missingWhisperCLI
     case missingModel
     case missingVADModel
+    case checkingVADCLI
+    case unsupportedVADCLI
     case noOutputFormats
 }
 
@@ -122,7 +124,8 @@ enum TaskPresentation {
         hasModel: Bool,
         outputFormatCount: Int,
         vadEnabled: Bool = false,
-        hasVADModel: Bool = true
+        hasVADModel: Bool = true,
+        vadCLICapability: WhisperCLICapability = .supported
     ) -> StartDisabledReason? {
         if isRunning {
             return .running
@@ -144,6 +147,13 @@ enum TaskPresentation {
         }
         if vadEnabled && !hasVADModel {
             return .missingVADModel
+        }
+        if vadEnabled {
+            switch vadCLICapability {
+            case .unchecked, .checking: return .checkingVADCLI
+            case .unsupported: return .unsupportedVADCLI
+            case .supported: break
+            }
         }
         return nil
     }

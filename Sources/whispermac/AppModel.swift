@@ -17,7 +17,10 @@ final class AppModel: ObservableObject {
         didSet { store(outputDirectoryPath, forKey: Keys.outputDirectoryPath) }
     }
     @Published var whisperCLIPath: String {
-        didSet { store(whisperCLIPath, forKey: Keys.whisperCLIPath) }
+        didSet {
+            store(whisperCLIPath, forKey: Keys.whisperCLIPath)
+            refreshVADCLICapability()
+        }
     }
     @Published var modelPath: String {
         didSet { store(modelPath, forKey: Keys.modelPath) }
@@ -39,6 +42,7 @@ final class AppModel: ObservableObject {
             if let data = try? JSONEncoder().encode(vadSettings) {
                 defaults.set(data, forKey: Keys.vadSettings)
             }
+            if vadSettings.isEnabled { refreshVADCLICapability() }
         }
     }
     @Published var logs: [String]
@@ -51,6 +55,7 @@ final class AppModel: ObservableObject {
     @Published var currentStageDescription = ""
     @Published var currentTranscriptionProgress = 0.0
     @Published var isDownloadingRuntime = false
+    @Published private(set) var vadCLICapability: WhisperCLICapability = .unchecked
     @Published private(set) var isDownloadingVADModel = false
     @Published var isRuntimeDownloadPromptPresented = false
     @Published var downloadedBytes: Int64 = 0
@@ -77,6 +82,7 @@ final class AppModel: ObservableObject {
     private var transcriptionTask: Task<Void, Never>?
     private var runtimeDownloadTask: Task<Void, Never>?
     private var vadDownloadTask: Task<Void, Never>?
+    private var vadCLICheckTask: Task<Void, Never>?
     private var previewLoadGeneration = 0
     private lazy var historyStore = TranscriptionHistoryStore()
     private let completionNotifier: CompletionNotifier
@@ -134,6 +140,7 @@ final class AppModel: ObservableObject {
         // persisted over the stored setting.
 
         loadHistoryFromStore()
+        refreshVADCLICapability()
     }
 
     var logsText: String {
@@ -181,8 +188,24 @@ final class AppModel: ObservableObject {
             hasModel: hasResolvableModel,
             outputFormatCount: outputFormats.count,
             vadEnabled: vadSettings.isEnabled,
-            hasVADModel: !resolvedVADModelPath.isEmpty
+            hasVADModel: !resolvedVADModelPath.isEmpty,
+            vadCLICapability: vadCLICapability
         )
+    }
+
+    func refreshVADCLICapability() {
+        vadCLICheckTask?.cancel()
+        let path = resolvedWhisperCLIPath
+        guard !path.isEmpty else {
+            vadCLICapability = .unsupported
+            return
+        }
+        vadCLICapability = .checking
+        vadCLICheckTask = Task { [weak self] in
+            let supported = await WhisperCLICapabilityChecker.shared.supportsVAD(at: path)
+            guard !Task.isCancelled, let self, self.resolvedWhisperCLIPath == path else { return }
+            self.vadCLICapability = supported ? .supported : .unsupported
+        }
     }
 
     var downloadProgress: Double? {

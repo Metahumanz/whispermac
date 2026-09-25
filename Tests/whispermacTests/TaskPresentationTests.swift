@@ -7,6 +7,13 @@ import Testing
 /// batch transcription, cancelling, and the three terminal outcomes without
 /// inventing per-file progress or treating 100% as success.
 struct TaskPresentationTests {
+    @Test
+    func activeDownloadCancellationRoutesToActualDownloadKind() {
+        #expect(TaskPresentation.activeDownload(isDownloadingRuntime: false, isDownloadingVADModel: true) == .vadModel)
+        #expect(TaskPresentation.activeDownload(isDownloadingRuntime: true, isDownloadingVADModel: false) == .runtime)
+        #expect(TaskPresentation.activeDownload(isDownloadingRuntime: false, isDownloadingVADModel: false) == nil)
+    }
+
 
     private static let noBlockers: Set<RuntimeComponent> = []
     private static let cliMissing: Set<RuntimeComponent> = [.whisperCLI]

@@ -425,6 +425,17 @@ final class AppModel: ObservableObject {
         runtimeDownloadTask?.cancel()
     }
 
+    func cancelActiveDownload() {
+        switch TaskPresentation.activeDownload(
+            isDownloadingRuntime: isDownloadingRuntime,
+            isDownloadingVADModel: isDownloadingVADModel
+        ) {
+        case .runtime: cancelRuntimeDownload()
+        case .vadModel: cancelVADModelDownload()
+        case nil: break
+        }
+    }
+
     func setFormat(_ format: OutputFormat, enabled: Bool) {
         if enabled {
             outputFormats.insert(format)

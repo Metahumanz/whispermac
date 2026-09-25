@@ -501,7 +501,7 @@ struct PersistentActionBar: View {
             runningTrailing
         case .downloadingRuntime:
             Button(L.tr("button.cancel_download"), role: .destructive) {
-                model.cancelRuntimeDownload()
+                model.cancelActiveDownload()
             }
             .buttonStyle(.bordered)
         case let .finished(outcome):

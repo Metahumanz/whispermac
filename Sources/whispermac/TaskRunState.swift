@@ -45,6 +45,11 @@ enum MainContentState: Equatable {
     case setup(SetupReadiness)
 }
 
+enum ActiveDownload: Equatable {
+    case runtime
+    case vadModel
+}
+
 /// Why "Start Transcription" cannot run right now; `nil` means enabled.
 /// Ordering mirrors the historical `canStart` checks.
 enum StartDisabledReason: Equatable {
@@ -58,6 +63,12 @@ enum StartDisabledReason: Equatable {
 }
 
 enum TaskPresentation {
+    static func activeDownload(isDownloadingRuntime: Bool, isDownloadingVADModel: Bool) -> ActiveDownload? {
+        if isDownloadingVADModel { return .vadModel }
+        if isDownloadingRuntime { return .runtime }
+        return nil
+    }
+
     /// Pure mapping from model facts to the main workspace state.
     static func mainContent(
         isRunning: Bool,

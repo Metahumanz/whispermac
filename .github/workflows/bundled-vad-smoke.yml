@@ -66,9 +66,11 @@ jobs:
           test -s "$MODEL_CACHE/$MODEL_FILE"
           test -s "$MODEL_CACHE/$ENCODER_ARCHIVE"
           test -s "$MODEL_CACHE/$VAD_FILE"
-          mkdir -p "$MODEL_CACHE/Models"
-          ditto -x -k "$MODEL_CACHE/$ENCODER_ARCHIVE" "$MODEL_CACHE/Models"
-          test -d "$MODEL_CACHE/Models/ggml-large-v3-turbo-encoder.mlmodelc"
+          mkdir -p "$GITHUB_WORKSPACE/Models"
+          cp "$MODEL_CACHE/$MODEL_FILE" "$GITHUB_WORKSPACE/Models/$MODEL_FILE"
+          ditto -x -k "$MODEL_CACHE/$ENCODER_ARCHIVE" "$GITHUB_WORKSPACE/Models"
+          test -d "$GITHUB_WORKSPACE/Models/ggml-large-v3-turbo-encoder.mlmodelc"
+          test -s "$GITHUB_WORKSPACE/Models/$MODEL_FILE"
 
       - name: Run unit tests
         run: swift test
@@ -82,6 +84,7 @@ jobs:
       - name: Generate speech fixture and test relocated bundled CLI
         env:
           WHISPERMAC_SMOKE_LANGUAGE: en
+          WHISPERMAC_SMOKE_TMPDIR: ${{ runner.temp }}
         run: |
           say -o "$RUNNER_TEMP/vad-smoke.aiff" "This is a speech activity detection integration test. The voice pauses briefly, then continues speaking."
           afconvert -f WAVE -d LEI16@16000 -c 1 \

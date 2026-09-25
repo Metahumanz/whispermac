@@ -18,7 +18,7 @@ for path in "$SOURCE_APP" "$WHISPER_MODEL" "$INPUT_AUDIO" "$VAD_MODEL"; do
   fi
 done
 
-WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/whispermac-bundled-vad.XXXXXX")"
+WORK_DIR="$(mktemp -d "${WHISPERMAC_SMOKE_TMPDIR:-${TMPDIR:-/tmp}}/whispermac-bundled-vad.XXXXXX")"
 APP_COPY="$WORK_DIR/WhisperMac.app"
 CLI="$APP_COPY/Contents/Resources/runtime/bin/whisper-cli"
 RESULTS="$WORK_DIR/results"
@@ -29,6 +29,13 @@ if [[ ! -x "$CLI" ]]; then
   echo "App bundle does not contain an executable whisper-cli: $CLI" >&2
   exit 1
 fi
+
+BUNDLED_MODEL="$APP_COPY/Contents/Resources/runtime/Models/$(basename "$WHISPER_MODEL")"
+if [[ ! -s "$BUNDLED_MODEL" ]]; then
+  echo "App bundle does not contain the requested Whisper model: $BUNDLED_MODEL" >&2
+  exit 1
+fi
+WHISPER_MODEL="$BUNDLED_MODEL"
 
 run_transcription() {
   local name="$1"

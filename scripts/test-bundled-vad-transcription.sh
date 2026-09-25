@@ -38,13 +38,13 @@ run_transcription() {
     >"$RESULTS/$name.log" 2>&1
   test -s "$RESULTS/$name.txt"
   test -s "$RESULTS/$name.srt"
-  rg -q "Core ML model loaded" "$RESULTS/$name.log"
+  grep -Eq "Core ML model loaded" "$RESULTS/$name.log"
 }
 
 run_transcription vad-off -l "${WHISPERMAC_SMOKE_LANGUAGE:-zh}"
 run_transcription vad-on -l "${WHISPERMAC_SMOKE_LANGUAGE:-zh}" \
   --vad -vm "$VAD_MODEL" -vt 0.5 -vspd 250 -vsd 500 -vp 200
 
-rg -q "VAD version|model version|VAD model" "$RESULTS/vad-on.log"
+grep -Eq "VAD version|model version|VAD model" "$RESULTS/vad-on.log"
 echo "Relocated bundled CLI completed VAD-off/on TXT+SRT transcriptions."
 echo "Logs and outputs: $RESULTS"

@@ -4,8 +4,7 @@ enum CommandLogFilter {
     static func filteredLine(
         for stream: ShellOutputStream,
         tool: CommandLogTool,
-        line: String,
-        vadEnabled: Bool = false
+        line: String
     ) -> String? {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -14,11 +13,6 @@ enum CommandLogFilter {
         case .audioPreprocessor:
             return filteredAudioPreprocessorLine(stream: stream, line: trimmed)
         case .whisper:
-            if vadEnabled && trimmed == "whisper_backend_init_gpu: no GPU found" {
-                // whisper.cpp also initializes the CPU-only Silero backend;
-                // this message is not evidence that Whisper lost Metal.
-                return nil
-            }
             return filteredWhisperLine(stream: stream, line: trimmed)
         }
     }

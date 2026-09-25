@@ -92,8 +92,7 @@ struct TranscriptionService {
                 guard let filtered = CommandLogFilter.filteredLine(
                     for: stream,
                     tool: .whisper,
-                    line: line,
-                    vadEnabled: vadSettings.isEnabled
+                    line: line
                 ) else {
                     return
                 }

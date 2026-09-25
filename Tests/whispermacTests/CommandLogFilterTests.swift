@@ -63,8 +63,7 @@ func repetitiveVADWindowLinesAreFiltered() {
 }
 
 @Test
-func vadCPUBackendDoesNotLookLikeWhisperGPUFailure() {
+func gpuInitializationFailureIsNeverHiddenWhenVADIsEnabled() {
     let backendLine = "whisper_backend_init_gpu: no GPU found"
     #expect(CommandLogFilter.filteredLine(for: .stderr, tool: .whisper, line: backendLine) == backendLine)
-    #expect(CommandLogFilter.filteredLine(for: .stderr, tool: .whisper, line: backendLine, vadEnabled: true) == nil)
 }

@@ -506,6 +506,13 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func retryTranscriptionWithoutVAD() {
+        guard vadSettings.isEnabled, case .noSpeech? = lastOutcome else { return }
+        vadSettings.isEnabled = false
+        dismissOutcome()
+        startTranscription()
+    }
+
     /// Leaves the terminal-result view without starting anything (used by
     /// "New Task" / "Adjust Options"); queue and settings are preserved.
     func dismissOutcome() {
@@ -564,6 +571,7 @@ final class AppModel: ObservableObject {
         var successCount = 0
         var failureCount = 0
         var wasCancelled = false
+        var noSpeechFileNames: [String] = []
 
         do {
             if snapshot.vadSettings.isEnabled {
@@ -690,7 +698,12 @@ final class AppModel: ObservableObject {
                 }
             )
 
-            successCount = totalFiles
+            let noSpeechInputFiles = snapshot.vadSettings.isEnabled
+                ? reports.indices.filter {
+                    !reports[$0].outputFiles.isEmpty && !reports[$0].containsTranscriptContent
+                }.map { snapshot.inputFiles[$0] }
+                : []
+            successCount = totalFiles - noSpeechInputFiles.count
             if let whisperCommand = reports.first?.whisperCommand {
                 appendLog(L.tr("log.whisper_command", whisperCommand))
             }
@@ -711,7 +724,15 @@ final class AppModel: ObservableObject {
             let outputFiles = reports.flatMap(\.outputFiles)
             lastRunOutputFiles = outputFiles
             selectedResultFileID = outputFiles.first
-            lastOutcome = .succeeded(inputFileCount: totalFiles, outputFiles: outputFiles)
+            if noSpeechInputFiles.isEmpty {
+                lastOutcome = .succeeded(inputFileCount: totalFiles, outputFiles: outputFiles)
+            } else {
+                noSpeechFileNames = noSpeechInputFiles.map(\.lastPathComponent)
+                for fileName in noSpeechFileNames {
+                    appendLog(L.tr("log.vad_no_speech_file", fileName))
+                }
+                lastOutcome = .noSpeech(fileNames: noSpeechFileNames, outputFiles: outputFiles)
+            }
             recordHistoryEntries(
                 reports: reports,
                 inputFiles: snapshot.inputFiles,
@@ -736,6 +757,11 @@ final class AppModel: ObservableObject {
         if wasCancelled {
             statusText = L.tr("status.cancelled")
             currentStageDescription = L.tr("status.cancelled")
+        } else if !noSpeechFileNames.isEmpty {
+            statusText = L.tr("result.no_speech.bar", noSpeechFileNames.count)
+            currentStageDescription = L.tr("result.no_speech.title")
+            currentFileProgress = 1
+            overallProgress = 1
         } else {
             statusText = L.tr("log.completed_summary", successCount, failureCount)
             currentStageDescription = failureCount == 0 ? L.tr("stage.all_done") : L.tr("stage.processing_finished")

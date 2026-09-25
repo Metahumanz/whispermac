@@ -23,6 +23,7 @@ enum ActiveRunPhase: Equatable {
 /// implies `.succeeded`.
 enum TaskOutcome: Equatable {
     case succeeded(inputFileCount: Int, outputFiles: [URL])
+    case noSpeech(fileNames: [String], outputFiles: [URL])
     case failed(summary: String)
     case cancelled
 }

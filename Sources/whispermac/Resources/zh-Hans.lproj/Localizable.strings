@@ -205,6 +205,12 @@
 "result.success_badge" = "已生成输出";
 "result.success.title" = "转写完成";
 "result.success.detail" = "已处理 %d 个文件，生成 %d 个输出文件。";
+"result.no_speech.badge" = "未检测到语音";
+"result.no_speech.title" = "VAD 未在部分文件中检测到语音";
+"result.no_speech.detail" = "这些文件的输出可能为空。轻声讲话可能被漏检；可关闭 VAD 后重新转写完整音频。";
+"result.no_speech.bar" = "未检测到语音 · %d 个文件";
+"result.retry_without_vad" = "关闭 VAD 并重试";
+"log.vad_no_speech_file" = "VAD 未检测到语音：%@";
 "result.selected_subtitles" = "所选字幕";
 "result.selected_outputs" = "所选输出";
 "result.preview_caption" = "字幕（SRT）预览";

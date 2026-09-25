@@ -274,6 +274,21 @@ struct TaskPresentationTests {
         #expect(state == .finished(.cancelled))
     }
 
+    @Test
+    func noSpeechOutcomeRemainsDistinctFromSuccessAndFailure() {
+        let outcome = TaskOutcome.noSpeech(fileNames: ["quiet-lecture.m4a"], outputFiles: [])
+        let state = TaskPresentation.mainContent(
+            isRunning: false,
+            isCancelling: false,
+            isDownloadingRuntime: false,
+            activePhase: nil,
+            lastOutcome: outcome,
+            inputCount: 1,
+            blockingRuntimeComponents: Self.noBlockers
+        )
+        #expect(state == .finished(outcome))
+    }
+
     // MARK: start disabled reasons
 
     @Test

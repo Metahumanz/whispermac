@@ -106,6 +106,41 @@ struct TranscriptionReport: Sendable {
     let audioPreparationCommand: String
     let whisperCommand: String
     let outputFiles: [URL]
+
+    var containsTranscriptContent: Bool {
+        TranscriptContentDetector.containsContent(in: outputFiles)
+    }
+}
+
+enum TranscriptContentDetector {
+    static func containsContent(in files: [URL]) -> Bool {
+        for file in files {
+            guard let data = try? Data(contentsOf: file), !data.isEmpty else { continue }
+            switch file.pathExtension.lowercased() {
+            case "txt", "srt", "vtt":
+                if let text = String(data: data, encoding: .utf8),
+                   !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    return true
+                }
+            case "json":
+                if jsonContainsTranscriptText(data) { return true }
+            default:
+                continue
+            }
+        }
+        return false
+    }
+
+    private static func jsonContainsTranscriptText(_ data: Data) -> Bool {
+        guard let root = try? JSONSerialization.jsonObject(with: data),
+              let dictionary = root as? [String: Any],
+              let transcription = dictionary["transcription"] as? [[String: Any]]
+        else { return false }
+        return transcription.contains { entry in
+            guard let text = entry["text"] as? String else { return false }
+            return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+    }
 }
 
 enum AccelerationMode: String, CaseIterable, Hashable, Sendable {

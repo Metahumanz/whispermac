@@ -205,6 +205,12 @@
 "result.success_badge" = "Output generated";
 "result.success.title" = "Transcription Complete";
 "result.success.detail" = "Processed %d files, generated %d output files.";
+"result.no_speech.badge" = "No speech detected";
+"result.no_speech.title" = "VAD did not detect speech in some files";
+"result.no_speech.detail" = "The outputs for these files may be empty. Quiet speech can be missed; retry without VAD to transcribe the full audio.";
+"result.no_speech.bar" = "No speech detected · %d files";
+"result.retry_without_vad" = "Retry with VAD Off";
+"log.vad_no_speech_file" = "VAD detected no speech in: %@";
 "result.selected_subtitles" = "Selected Subtitle";
 "result.selected_outputs" = "Selected Output";
 "result.preview_caption" = "Subtitle (SRT) Preview";

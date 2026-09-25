@@ -949,6 +949,8 @@ struct RunResultView: View {
                 switch outcome {
                 case let .succeeded(inputFileCount, outputFiles):
                     successBody(inputFileCount: inputFileCount, outputFiles: outputFiles)
+                case let .noSpeech(fileNames, outputFiles):
+                    noSpeechBody(fileNames: fileNames, outputFiles: outputFiles)
                 case let .failed(summary):
                     failedBody(summary: summary)
                 case .cancelled:
@@ -989,6 +991,31 @@ struct RunResultView: View {
                 Text(L.tr("result.preview_none"))
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private func noSpeechBody(fileNames: [String], outputFiles: [URL]) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 8) {
+                Image(systemName: "waveform.badge.exclamationmark")
+                    .foregroundStyle(Color(nsColor: .systemOrange))
+                Text(L.tr("result.no_speech.badge"))
+                    .fontWeight(.medium)
+                    .foregroundStyle(Color(nsColor: .systemOrange))
+            }
+            Text(L.tr("result.no_speech.title"))
+                .font(.system(size: UITypographyScale.scaled(22), weight: .semibold))
+            Text(L.tr("result.no_speech.detail"))
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(fileNames, id: \.self) { name in
+                    Label(name, systemImage: "waveform")
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(name)
+                }
+            }
+            if !outputFiles.isEmpty { outputPicker(outputFiles) }
         }
     }
 

@@ -352,6 +352,13 @@ struct PersistentActionBar: View {
                     Text(L.tr("bar.done_files", inputFileCount))
                         .font(.system(size: UITypographyScale.scaled(13), weight: .medium))
                 }
+            case let .noSpeech(fileNames, _):
+                HStack(spacing: 8) {
+                    Image(systemName: "waveform.badge.exclamationmark")
+                        .foregroundStyle(Color(nsColor: .systemOrange))
+                    Text(L.tr("result.no_speech.bar", fileNames.count))
+                        .font(.system(size: UITypographyScale.scaled(13), weight: .medium))
+                }
             case let .failed(summary):
                 HStack(spacing: 8) {
                     Image(systemName: "xmark.octagon.fill")
@@ -512,6 +519,16 @@ struct PersistentActionBar: View {
             switch outcome {
             case .succeeded:
                 successTrailing
+            case .noSpeech:
+                HStack(spacing: 12) {
+                    Button(L.tr("options.adjust")) { model.dismissOutcome() }
+                        .buttonStyle(.bordered)
+                    Button(L.tr("result.retry_without_vad")) {
+                        model.retryTranscriptionWithoutVAD()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!model.canStart)
+                }
             case .failed:
                 Button(L.tr("bar.view_logs"), action: openLogs)
                     .buttonStyle(.bordered)

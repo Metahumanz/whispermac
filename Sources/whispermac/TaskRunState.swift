@@ -51,6 +51,30 @@ enum ActiveDownload: Equatable {
     case vadModel
 }
 
+enum CoreMLRuntimeStatus: Equatable {
+    case notRequested
+    case loading
+    case loaded
+    case failed
+}
+
+enum RuntimeAccelerationSignal: Equatable {
+    case coreMLLoaded
+    case coreMLFailed
+
+    static func parse(_ line: String) -> RuntimeAccelerationSignal? {
+        let normalized = line.lowercased()
+        guard normalized.contains("core ml") || normalized.contains("coreml") else { return nil }
+        if normalized.contains("failed") || normalized.contains("error") || normalized.contains("could not load") {
+            return .coreMLFailed
+        }
+        if normalized.contains("model loaded") || normalized.contains("loaded core ml") {
+            return .coreMLLoaded
+        }
+        return nil
+    }
+}
+
 /// Why "Start Transcription" cannot run right now; `nil` means enabled.
 /// Ordering mirrors the historical `canStart` checks.
 enum StartDisabledReason: Equatable {

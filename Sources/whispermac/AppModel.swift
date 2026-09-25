@@ -73,6 +73,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var activePhase: ActiveRunPhase?
     @Published private(set) var activeSnapshot: AppConfigurationSnapshot?
     @Published private(set) var runEffectiveMode: AccelerationMode?
+    @Published private(set) var runCoreMLStatus: CoreMLRuntimeStatus = .notRequested
     @Published private(set) var lastOutcome: TaskOutcome?
     @Published private(set) var lastRunOutputFiles: [URL] = []
     @Published var selectedResultFileID: URL?
@@ -591,11 +592,13 @@ final class AppModel: ObservableObject {
             await finishTranscriptionRun(failureCount: snapshot.inputFiles.count)
             return
         }
-        runEffectiveMode = modelPlan.effectiveMode
+        let awaitsCoreMLConfirmation = snapshot.accelerationMode == .gpuAndANE && modelPlan.coreMLAvailable
+        runCoreMLStatus = awaitsCoreMLConfirmation ? .loading : .notRequested
+        runEffectiveMode = awaitsCoreMLConfirmation ? nil : .pureGPU
 
         appendLog(L.tr("log.start_files", snapshot.inputFiles.count))
         appendLog(L.tr("log.requested_mode", snapshot.accelerationMode.title))
-        appendLog(L.tr("log.effective_mode", modelPlan.effectiveMode.title))
+        appendLog(L.tr("log.expected_mode", modelPlan.effectiveMode.title))
         appendLog(L.tr("log.vad_enabled", snapshot.vadSettings.isEnabled ? L.tr("log.enabled") : L.tr("log.disabled")))
         if snapshot.vadSettings.isEnabled {
             let vadModelName = URL(fileURLWithPath: snapshot.vadSettings.modelPath).lastPathComponent
@@ -679,6 +682,7 @@ final class AppModel: ObservableObject {
                 },
                 onLog: { [weak self] line in
                     await MainActor.run {
+                        self?.observeRuntimeAccelerationLog(line, expectedCoreML: awaitsCoreMLConfirmation)
                         self?.appendLog(line)
                     }
                 },
@@ -773,6 +777,20 @@ final class AppModel: ObservableObject {
             failureCount: failureCount,
             wasCancelled: wasCancelled
         )
+    }
+
+    private func observeRuntimeAccelerationLog(_ line: String, expectedCoreML: Bool) {
+        guard expectedCoreML, let signal = RuntimeAccelerationSignal.parse(line) else { return }
+        switch signal {
+        case .coreMLLoaded:
+            runCoreMLStatus = .loaded
+            runEffectiveMode = .gpuAndANE
+            appendLog(L.tr("log.coreml_runtime_loaded"))
+        case .coreMLFailed:
+            runCoreMLStatus = .failed
+            runEffectiveMode = .pureGPU
+            appendLog(L.tr("log.coreml_runtime_failed"))
+        }
     }
 
     private func installPreviewFiles(from reports: [TranscriptionReport], inputs: [BatchTranscriptionInput]) {

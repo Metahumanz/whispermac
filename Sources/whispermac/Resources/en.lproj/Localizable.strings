@@ -85,6 +85,9 @@
 "log.start_files" = "Starting transcription for %d file(s).";
 "log.requested_mode" = "Requested acceleration mode: %@";
 "log.effective_mode" = "Effective acceleration mode: %@";
+"log.expected_mode" = "Expected acceleration mode: %@";
+"log.coreml_runtime_loaded" = "whisper.cpp confirmed the Core ML encoder loaded; actual ANE usage is managed by Core ML.";
+"log.coreml_runtime_failed" = "Core ML encoder failed to load; the actual backend fallback is reported by whisper.cpp.";
 "log.model_path" = "Model path: %@";
 "log.runtime_model_path" = "Runtime model path: %@";
 "log.coreml_encoder" = "Core ML encoder: %@";
@@ -170,6 +173,10 @@
 "options.output.choose" = "Choose Other Folder…";
 "options.formats.hint" = "At least one output format must stay selected.";
 "options.acceleration.effective" = "In effect: %@";
+"options.acceleration.expected" = "Expected before runtime confirmation: %@";
+"options.acceleration.checking" = "Waiting for CLI confirmation (expected %@)";
+"options.acceleration.coreml_loaded" = "Core ML encoder loaded; ANE usage is managed by Core ML.";
+"options.acceleration.coreml_failed" = "Core ML encoder failed to load; see backend logs for the actual fallback.";
 "options.view_settings" = "View Settings…";
 "ready.title" = "Readiness";
 "ready.files" = "Ready to process %d files.";

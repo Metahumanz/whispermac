@@ -85,6 +85,9 @@
 "log.start_files" = "%d 件のファイルの文字起こしを開始します。";
 "log.requested_mode" = "要求されたアクセラレーションモード: %@";
 "log.effective_mode" = "実際のアクセラレーションモード: %@";
+"log.expected_mode" = "予測アクセラレーションモード: %@";
+"log.coreml_runtime_loaded" = "whisper.cpp が Core ML encoder の読み込みを確認しました。実際の ANE 使用は Core ML が管理します。";
+"log.coreml_runtime_failed" = "Core ML encoder の読み込みに失敗しました。実際のフォールバックは whisper.cpp のバックエンドログを確認してください。";
 "log.model_path" = "モデルパス: %@";
 "log.runtime_model_path" = "実行時モデルパス: %@";
 "log.coreml_encoder" = "Core ML encoder: %@";
@@ -170,6 +173,10 @@
 "options.output.choose" = "別のフォルダを選択…";
 "options.formats.hint" = "出力形式は最低 1 つ選択してください。";
 "options.acceleration.effective" = "実際の使用：%@";
+"options.acceleration.expected" = "実行時確認前の予測モード: %@";
+"options.acceleration.checking" = "CLI の確認待ち（予測 %@）";
+"options.acceleration.coreml_loaded" = "Core ML encoder を読み込みました。ANE の使用は Core ML が管理します。";
+"options.acceleration.coreml_failed" = "Core ML encoder の読み込みに失敗しました。実際のフォールバックはバックエンドログを確認してください。";
 "options.view_settings" = "設定を表示…";
 "ready.title" = "準備状況";
 "ready.files" = "%d 件のファイルを処理できます。";

@@ -85,6 +85,9 @@
 "log.start_files" = "准备开始，共 %d 个文件。";
 "log.requested_mode" = "请求加速模式: %@";
 "log.effective_mode" = "实际加速模式: %@";
+"log.expected_mode" = "预期加速模式: %@";
+"log.coreml_runtime_loaded" = "whisper.cpp 已确认 Core ML encoder 加载；实际 ANE 使用情况由 Core ML 管理。";
+"log.coreml_runtime_failed" = "Core ML encoder 加载失败；whisper.cpp 后端日志会报告实际回退方式。";
 "log.model_path" = "模型路径: %@";
 "log.runtime_model_path" = "运行时模型路径: %@";
 "log.coreml_encoder" = "Core ML encoder: %@";
@@ -170,6 +173,10 @@
 "options.output.choose" = "选择其他目录…";
 "options.formats.hint" = "至少选择一种输出格式。";
 "options.acceleration.effective" = "实际使用：%@";
+"options.acceleration.expected" = "运行时确认前的预期模式：%@";
+"options.acceleration.checking" = "等待 CLI 确认（预期 %@）";
+"options.acceleration.coreml_loaded" = "Core ML encoder 已加载；ANE 使用情况由 Core ML 管理。";
+"options.acceleration.coreml_failed" = "Core ML encoder 加载失败；请查看后端日志确认实际回退方式。";
 "options.view_settings" = "查看设置…";
 "ready.title" = "就绪状态";
 "ready.files" = "已准备好处理 %d 个文件。";

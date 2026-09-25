@@ -845,8 +845,16 @@ struct RunWorkspaceView: View {
     }
 
     private func effectiveAccelerationText(_ snapshot: AppConfigurationSnapshot) -> String {
-        let effectiveTitle = model.runEffectiveMode?.title ?? snapshot.accelerationMode.title
-        return L.tr("options.acceleration.effective", effectiveTitle)
+        switch model.runCoreMLStatus {
+        case .loading:
+            return L.tr("options.acceleration.checking", snapshot.accelerationMode.title)
+        case .loaded:
+            return L.tr("options.acceleration.coreml_loaded")
+        case .failed:
+            return L.tr("options.acceleration.coreml_failed")
+        case .notRequested:
+            return L.tr("options.acceleration.expected", model.runEffectiveMode?.title ?? snapshot.accelerationMode.title)
+        }
     }
 
     private func vadSummary(_ settings: VADSettings) -> String {

@@ -94,6 +94,7 @@ enum RuntimeInstaller {
         )
         let destination = modelsDirectory.appending(path: VADModelResolver.fileName)
         do {
+            try Task.checkCancellation()
             try replaceItem(at: destination, with: downloadedURL, executable: false)
         } catch {
             try? FileManager.default.removeItem(at: downloadedURL)
@@ -131,6 +132,7 @@ enum RuntimeInstaller {
             onEvent: onEvent
         )
         do {
+            try Task.checkCancellation()
             try replaceItem(at: modelDestination, with: modelDownloadedURL, executable: false)
         } catch {
             try? FileManager.default.removeItem(at: modelDownloadedURL)
@@ -280,13 +282,47 @@ enum RuntimeInstaller {
         }
     }
 
-    private static func replaceItem(at destination: URL, with source: URL, executable: Bool) throws {
-        if FileManager.default.fileExists(atPath: destination.path) {
-            try FileManager.default.removeItem(at: destination)
+    static func replaceItem(
+        at destination: URL,
+        with source: URL,
+        executable: Bool,
+        beforeCommit: () throws -> Void = { try checkInstallCancellation() }
+    ) throws {
+        let fileManager = FileManager.default
+        let stagingURL = destination.deletingLastPathComponent()
+            .appending(path: ".whispermac-install-\(UUID().uuidString)")
+        do {
+            try moveOrCopy(source, to: stagingURL)
+            if executable {
+                try fileManager.setAttributes([.posixPermissions: 0o755], ofItemAtPath: stagingURL.path)
+            }
+            try beforeCommit()
+
+            if fileManager.fileExists(atPath: destination.path) {
+                _ = try fileManager.replaceItemAt(destination, withItemAt: stagingURL)
+            } else {
+                try fileManager.moveItem(at: stagingURL, to: destination)
+            }
+            try? fileManager.removeItem(at: source)
+        } catch {
+            try? fileManager.removeItem(at: stagingURL)
+            throw error
         }
-        try FileManager.default.moveItem(at: source, to: destination)
-        if executable {
-            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: destination.path)
+    }
+
+    private static func moveOrCopy(_ source: URL, to destination: URL) throws {
+        do {
+            try FileManager.default.moveItem(at: source, to: destination)
+        } catch {
+            guard FileManager.default.fileExists(atPath: source.path) else { throw error }
+            try FileManager.default.copyItem(at: source, to: destination)
+            try? FileManager.default.removeItem(at: source)
+        }
+    }
+
+    private static func checkInstallCancellation() throws {
+        if withUnsafeCurrentTask(body: { $0?.isCancelled ?? false }) {
+            throw CancellationError()
         }
     }
 

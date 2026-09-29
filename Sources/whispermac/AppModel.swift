@@ -417,16 +417,20 @@ final class AppModel: ObservableObject {
             mediaScanTask = nil
         }
         let expanded = await mediaURLExpander(urls)
-        let additions = PanelHelper.mediaFileAdditions(from: expanded, existing: inputFiles)
-        if !additions.isEmpty {
-            inputFiles.append(contentsOf: additions)
-            if outputDirectoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                outputDirectoryPath = ""
-            }
-            mediaAdditionFeedback = L.tr("media.added_count", additions.count)
-        } else {
+        guard !expanded.isEmpty else {
             mediaAdditionFeedback = L.tr("media.no_supported_files")
+            return
         }
+        let additions = PanelHelper.mediaFileAdditions(from: expanded, existing: inputFiles)
+        guard !additions.isEmpty else {
+            mediaAdditionFeedback = L.tr("media.no_new_files")
+            return
+        }
+        inputFiles.append(contentsOf: additions)
+        if outputDirectoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            outputDirectoryPath = ""
+        }
+        mediaAdditionFeedback = L.tr("media.added_count", additions.count)
     }
 
     func clearInputFiles() {

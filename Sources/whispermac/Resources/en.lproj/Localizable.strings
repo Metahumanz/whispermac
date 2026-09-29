@@ -167,6 +167,7 @@
 "media.scanning" = "Scanning for media files…";
 "media.added_count" = "Added %lld media files";
 "media.no_supported_files" = "No supported media files found in the selected items";
+"media.no_new_files" = "No new media files to add";
 "empty.defaults.title" = "Default Task Options";
 "options.title" = "Task Options";
 "options.adjust" = "Adjust Options";

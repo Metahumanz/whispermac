@@ -101,7 +101,8 @@ enum PanelHelper {
     }
 }
 
-// APFS is case-insensitive; compare standardized, lowercased paths.
+// Respect the volume's filename case-sensitivity when building normalized
+// deduplication keys.
 private extension URL {
     var mediaDedupeKey: String {
         let supportsCaseSensitiveNames = try? resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey])

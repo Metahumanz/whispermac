@@ -167,6 +167,7 @@
 "media.scanning" = "メディアファイルをスキャン中…";
 "media.added_count" = "メディアファイルを %lld 件追加しました";
 "media.no_supported_files" = "選択した項目に対応するメディアファイルがありません";
+"media.no_new_files" = "追加できる新しいメディアファイルはありません";
 "empty.defaults.title" = "タスクのデフォルト設定";
 "options.title" = "タスクオプション";
 "options.adjust" = "オプションを調整";

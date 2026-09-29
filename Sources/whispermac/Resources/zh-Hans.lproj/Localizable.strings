@@ -167,6 +167,7 @@
 "media.scanning" = "正在扫描媒体文件…";
 "media.added_count" = "已添加 %lld 个媒体文件";
 "media.no_supported_files" = "所选内容中未找到支持的媒体文件";
+"media.no_new_files" = "没有新的媒体文件需要添加";
 "empty.defaults.title" = "任务默认选项";
 "options.title" = "任务选项";
 "options.adjust" = "调整选项";

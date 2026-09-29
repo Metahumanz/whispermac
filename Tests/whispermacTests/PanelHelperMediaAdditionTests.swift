@@ -202,6 +202,77 @@ func appModelRejectsNewMediaDuringScanAndAllowsItAfterCompletion() async {
     #expect(model.inputFiles == [first, second])
 }
 
+@Test
+@MainActor
+func emptyExpansionReportsNoSupportedMedia() async {
+    let (model, defaults, suiteName) = makeMediaAdditionModel(expanded: [])
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+
+    model.addMediaURLs([URL(fileURLWithPath: "/tmp/drop-folder")])
+    await model.waitForMediaScan()
+
+    #expect(model.mediaAdditionFeedback == L.tr("media.no_supported_files"))
+    #expect(model.inputFiles.isEmpty)
+}
+
+@Test
+@MainActor
+func expansionWithOnlyExistingFilesReportsNoNewMedia() async {
+    let existing = URL(fileURLWithPath: "/tmp/already-queued.mp4")
+    let (model, defaults, suiteName) = makeMediaAdditionModel(expanded: [existing])
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    model.inputFiles = [existing]
+
+    model.addMediaURLs([URL(fileURLWithPath: "/tmp/drop-again")])
+    await model.waitForMediaScan()
+
+    #expect(model.mediaAdditionFeedback == L.tr("media.no_new_files"))
+    #expect(model.inputFiles == [existing])
+}
+
+@Test
+@MainActor
+func expansionWithNewFileAddsItAndReportsCount() async {
+    let newFile = URL(fileURLWithPath: "/tmp/new-file.mov")
+    let (model, defaults, suiteName) = makeMediaAdditionModel(expanded: [newFile])
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+
+    model.addMediaURLs([URL(fileURLWithPath: "/tmp/drop-folder")])
+    await model.waitForMediaScan()
+
+    #expect(model.mediaAdditionFeedback == L.tr("media.added_count", 1))
+    #expect(model.inputFiles == [newFile])
+}
+
+@Test
+@MainActor
+func mixedExistingAndNewFilesOnlyAddsTheNewItem() async {
+    let existing = URL(fileURLWithPath: "/tmp/already-queued.mp4")
+    let newFile = URL(fileURLWithPath: "/tmp/new-file.m4a")
+    let (model, defaults, suiteName) = makeMediaAdditionModel(expanded: [existing, newFile])
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    model.inputFiles = [existing]
+
+    model.addMediaURLs([URL(fileURLWithPath: "/tmp/drop-mixed")])
+    await model.waitForMediaScan()
+
+    #expect(model.mediaAdditionFeedback == L.tr("media.added_count", 1))
+    #expect(model.inputFiles == [existing, newFile])
+}
+
+@MainActor
+private func makeMediaAdditionModel(expanded: [URL]) -> (AppModel, UserDefaults, String) {
+    let suiteName = "MediaAdditionFeedback-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defaults.removePersistentDomain(forName: suiteName)
+    let model = AppModel(
+        defaults: defaults,
+        huggingFaceEnvironment: [:],
+        mediaURLExpander: { _ in expanded }
+    )
+    return (model, defaults, suiteName)
+}
+
 private actor MediaURLExpanderGate {
     private var continuations: [CheckedContinuation<[URL], Never>] = []
     private var startWaiters: [(Int, CheckedContinuation<Void, Never>)] = []

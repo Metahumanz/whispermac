@@ -250,10 +250,6 @@ struct SetupWorkspaceView: View {
                 ProgressView()
                 Text(model.mediaAdditionFeedback)
                     .foregroundStyle(.secondary)
-            } else if !model.mediaAdditionFeedback.isEmpty {
-                Text(model.mediaAdditionFeedback)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
             } else {
                 Image(systemName: "arrow.up.doc")
                     .font(.system(size: UITypographyScale.scaled(40)))
@@ -270,6 +266,11 @@ struct SetupWorkspaceView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.top, 8)
+                if !model.mediaAdditionFeedback.isEmpty {
+                    Text(model.mediaAdditionFeedback)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .frame(maxWidth: .infinity)

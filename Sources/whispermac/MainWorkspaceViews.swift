@@ -221,6 +221,7 @@ struct SetupWorkspaceView: View {
                             .textSelection(.enabled)
                         Button(L.tr("vad.download")) { model.downloadVADModel() }
                             .buttonStyle(.borderedProminent)
+                            .disabled(!model.canDownloadRuntimeAssets)
                         optionsForm
                     }
                 case .ready:
@@ -460,7 +461,7 @@ struct SetupWorkspaceView: View {
                     if !model.hasResolvableVADModel {
                         Button(L.tr("vad.download")) { model.downloadVADModel() }
                             .buttonStyle(.link)
-                            .disabled(model.isBusy)
+                            .disabled(!model.canDownloadRuntimeAssets)
                     }
                 }
 
@@ -533,7 +534,7 @@ struct SetupWorkspaceView: View {
                 readinessWarningRow(text: L.tr("vad.model_missing_short")) {
                     Button(L.tr("vad.download")) { model.downloadVADModel() }
                         .buttonStyle(.bordered)
-                        .disabled(model.isBusy)
+                        .disabled(!model.canDownloadRuntimeAssets)
                 }
             } else if missingBlockers.isEmpty {
                 if model.inputFiles.isEmpty {
@@ -570,6 +571,7 @@ struct SetupWorkspaceView: View {
                             model.startRuntimeDownload()
                         }
                         .buttonStyle(.bordered)
+                        .disabled(!model.canDownloadRuntimeAssets)
                         Button(L.tr("missing.choose_existing_model")) {
                             model.chooseModel()
                         }
@@ -616,6 +618,7 @@ struct MissingModelPanel: View {
                     Label(L.tr("missing.download_default_model"), systemImage: "arrow.down.circle")
                 }
                 .prominent(if: isPrimary)
+                .disabled(!model.canDownloadRuntimeAssets)
 
                 Button(L.tr("missing.choose_existing_model")) {
                     model.chooseModel()

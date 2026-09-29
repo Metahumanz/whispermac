@@ -92,6 +92,7 @@ final class AppModel: ObservableObject {
 
     private let defaults: UserDefaults
     private let vadModelSearchRoots: [URL]?
+    private let huggingFaceEnvironment: [String: String]
     private var hasPresentedInitialRuntimePrompt = false
     private var transcriptionTask: Task<Void, Never>?
     private var runtimeDownloadTask: Task<Void, Never>?
@@ -106,11 +107,13 @@ final class AppModel: ObservableObject {
     init(
         completionNotifier: CompletionNotifier = CompletionNotifier(),
         defaults: UserDefaults = .standard,
-        vadModelSearchRoots: [URL]? = nil
+        vadModelSearchRoots: [URL]? = nil,
+        huggingFaceEnvironment: [String: String]? = nil
     ) {
         self.completionNotifier = completionNotifier
         self.defaults = defaults
         self.vadModelSearchRoots = vadModelSearchRoots
+        self.huggingFaceEnvironment = huggingFaceEnvironment ?? ProcessInfo.processInfo.environment
         let guessed = PathResolver.guessDefaults()
         let storedWhisperCLIPath = defaults.string(forKey: Keys.whisperCLIPath) ?? ""
         let resolvedWhisperCLIPath = PathResolver.resolveWhisperCLIPath(storedWhisperCLIPath)
@@ -280,18 +283,22 @@ final class AppModel: ObservableObject {
     var hasResolvableVADModel: Bool { !resolvedVADModelPath.isEmpty }
 
     var hasHuggingFaceEnvironmentOverride: Bool {
-        ProcessInfo.processInfo.environment[HuggingFaceEndpoint.environmentVariableName] != nil
+        huggingFaceEnvironment[HuggingFaceEndpoint.environmentVariableName] != nil
     }
 
     var resolvedHuggingFaceBaseURL: URL? {
         HuggingFaceEndpoint.resolved(
             source: huggingFaceDownloadSource,
             customValue: customHuggingFaceEndpoint,
-            environment: ProcessInfo.processInfo.environment
+            environment: huggingFaceEnvironment
         )
     }
 
     var isHuggingFaceEndpointInvalid: Bool { resolvedHuggingFaceBaseURL == nil }
+
+    var canDownloadRuntimeAssets: Bool {
+        !isBusy && !isHuggingFaceEndpointInvalid
+    }
 
     var huggingFaceEndpointDisplayText: String {
         resolvedHuggingFaceBaseURL?.absoluteString ?? L.tr("hf.endpoint.invalid")

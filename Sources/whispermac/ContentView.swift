@@ -97,6 +97,7 @@ struct MainWindowContent: View {
             Button(L.tr("button.download_runtime")) {
                 model.startRuntimeDownload()
             }
+            .disabled(!model.canDownloadRuntimeAssets)
             Button(L.tr("button.not_now"), role: .cancel) {
                 model.dismissRuntimeDownloadPrompt()
             }
@@ -673,7 +674,7 @@ struct SettingsSheet: View {
                             }
                         } else if !model.hasResolvableVADModel {
                             Button(L.tr("vad.download")) { model.downloadVADModel() }
-                                .disabled(model.isBusy || model.isHuggingFaceEndpointInvalid)
+                                .disabled(!model.canDownloadRuntimeAssets)
                         }
                     }
                     if model.isDownloadingVADModel {
@@ -846,7 +847,7 @@ struct SettingsSheet: View {
                 Button(L.tr("button.download_runtime")) {
                     model.startRuntimeDownload()
                 }
-                .disabled(model.isHuggingFaceEndpointInvalid)
+                .disabled(!model.canDownloadRuntimeAssets)
                 Text(L.tr("privacy.download"))
                     .font(.caption)
                     .foregroundStyle(.secondary)

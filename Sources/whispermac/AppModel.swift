@@ -65,6 +65,8 @@ final class AppModel: ObservableObject {
     @Published var currentStageDescription = ""
     @Published var currentTranscriptionProgress = 0.0
     @Published var isDownloadingRuntime = false
+    @Published private(set) var isScanningMedia = false
+    @Published private(set) var mediaAdditionFeedback = ""
     @Published private(set) var vadCLICapability: WhisperCLICapability = .unchecked
     @Published private(set) var isDownloadingVADModel = false
     @Published var isRuntimeDownloadPromptPresented = false
@@ -96,6 +98,7 @@ final class AppModel: ObservableObject {
     private var vadDownloadTask: Task<Void, Never>?
     private var vadCLICheckTask: Task<Void, Never>?
     private var previewLoadGeneration = 0
+    private var activeMediaScans = 0
     private lazy var historyStore = TranscriptionHistoryStore()
     private let completionNotifier: CompletionNotifier
     private var keepAwakeToken: KeepAwakeToken?
@@ -181,7 +184,7 @@ final class AppModel: ObservableObject {
     }
 
     var canStart: Bool {
-        startDisabledReason == nil
+        startDisabledReason == nil && !isScanningMedia
     }
 
     /// CLI / model are blockers; a missing Core ML encoder is only an
@@ -247,7 +250,7 @@ final class AppModel: ObservableObject {
     }
 
     var isBusy: Bool {
-        isRunning || isDownloadingRuntime || isDownloadingVADModel
+        isRunning || isDownloadingRuntime || isDownloadingVADModel || isScanningMedia
     }
 
     var outputDirectoryDisplayText: String {
@@ -367,13 +370,27 @@ final class AppModel: ObservableObject {
         // would desync the visible queue from that snapshot, so additions are
         // rejected until the batch ends.
         guard !isRunning else { return }
-        let additions = PanelHelper.mediaFileAdditions(from: urls, existing: inputFiles)
-        guard !additions.isEmpty else { return }
-
-        inputFiles.append(contentsOf: additions)
-
-        if outputDirectoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            outputDirectoryPath = ""
+        guard !urls.isEmpty else { return }
+        activeMediaScans += 1
+        isScanningMedia = true
+        mediaAdditionFeedback = L.tr("media.scanning")
+        statusText = L.tr("media.scanning")
+        Task { [weak self] in
+            let expanded = await PanelHelper.expandedMediaURLs(from: urls)
+            guard let self else { return }
+            let additions = PanelHelper.mediaFileAdditions(from: expanded, existing: self.inputFiles)
+            if !additions.isEmpty {
+                self.inputFiles.append(contentsOf: additions)
+                if self.outputDirectoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    self.outputDirectoryPath = ""
+                }
+                self.mediaAdditionFeedback = L.tr("media.added_count", additions.count)
+            } else {
+                self.mediaAdditionFeedback = L.tr("media.no_supported_files")
+            }
+            self.activeMediaScans = max(self.activeMediaScans - 1, 0)
+            self.isScanningMedia = self.activeMediaScans > 0
+            if self.isScanningMedia { self.mediaAdditionFeedback = L.tr("media.scanning") }
         }
     }
 

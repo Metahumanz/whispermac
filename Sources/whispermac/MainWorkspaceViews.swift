@@ -245,21 +245,31 @@ struct SetupWorkspaceView: View {
 
     private var dropInvite: some View {
         VStack(spacing: 8) {
-            Image(systemName: "arrow.up.doc")
-                .font(.system(size: UITypographyScale.scaled(40)))
-                .foregroundStyle(.secondary)
-            Text(L.tr("empty.drop.title"))
-                .font(.system(size: UITypographyScale.scaled(20), weight: .medium))
-            Text(L.tr("empty.drop.detail"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Button {
-                model.chooseInputFiles()
-            } label: {
-                Label(L.tr("button.add_media"), systemImage: "plus")
+            if model.isScanningMedia {
+                ProgressView()
+                Text(model.mediaAdditionFeedback)
+                    .foregroundStyle(.secondary)
+            } else if !model.mediaAdditionFeedback.isEmpty {
+                Text(model.mediaAdditionFeedback)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            } else {
+                Image(systemName: "arrow.up.doc")
+                    .font(.system(size: UITypographyScale.scaled(40)))
+                    .foregroundStyle(.secondary)
+                Text(L.tr("empty.drop.title"))
+                    .font(.system(size: UITypographyScale.scaled(20), weight: .medium))
+                Text(L.tr("empty.drop.detail"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button {
+                    model.chooseInputFiles()
+                } label: {
+                    Label(L.tr("button.add_media"), systemImage: "plus")
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 8)
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.top, 8)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 220)

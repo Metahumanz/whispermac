@@ -162,8 +162,11 @@
 "privacy.local" = "ファイルはこの Mac でのみ処理されます。";
 "empty.title" = "文字起こし準備";
 "empty.subtitle" = "メディアを追加して出力オプションを選び、開始してください。";
-"empty.drop.title" = "メディアファイルをここにドラッグ";
-"empty.drop.detail" = "MP4、M4A、MP3、WAV などに対応";
+"empty.drop.title" = "メディアファイルまたはフォルダをここにドロップ";
+"empty.drop.detail" = "フォルダ内を再帰的にスキャンし、MP4、M4A、MP3、WAV などを追加します";
+"media.scanning" = "メディアファイルをスキャン中…";
+"media.added_count" = "メディアファイルを %lld 件追加しました";
+"media.no_supported_files" = "選択した項目に対応するメディアファイルがありません";
 "empty.defaults.title" = "タスクのデフォルト設定";
 "options.title" = "タスクオプション";
 "options.adjust" = "オプションを調整";

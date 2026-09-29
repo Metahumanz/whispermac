@@ -162,8 +162,11 @@
 "privacy.local" = "Files are processed only on this Mac.";
 "empty.title" = "Ready to Transcribe";
 "empty.subtitle" = "Add media and choose output options, then start.";
-"empty.drop.title" = "Drag Media Files Here";
-"empty.drop.detail" = "Supports MP4, M4A, MP3, WAV, and more";
+"empty.drop.title" = "Drop Media Files or Folders Here";
+"empty.drop.detail" = "Folders are scanned recursively for MP4, M4A, MP3, WAV, and other supported media";
+"media.scanning" = "Scanning for media files…";
+"media.added_count" = "Added %lld media files";
+"media.no_supported_files" = "No supported media files found in the selected items";
 "empty.defaults.title" = "Default Task Options";
 "options.title" = "Task Options";
 "options.adjust" = "Adjust Options";

@@ -474,9 +474,11 @@ struct PersistentActionBar: View {
     }
 
     private func setupStatusLine(_ readiness: SetupReadiness) -> String {
+        if model.isScanningMedia { return L.tr("media.scanning") }
         if model.isDownloadingRuntime {
             return model.statusText
         }
+        if !model.mediaAdditionFeedback.isEmpty { return model.mediaAdditionFeedback }
         if let reason = model.startDisabledReason {
             return disabledReasonText(reason)
         }
@@ -601,11 +603,13 @@ struct PersistentActionBar: View {
             model.startTranscription()
         }
         .buttonStyle(.borderedProminent)
-        .disabled(model.startDisabledReason != nil)
+        .disabled(model.startDisabledReason != nil || model.isScanningMedia)
         .accessibilityValue(Text(setupAccessibilityValue))
     }
 
     private var setupAccessibilityValue: String {
+        if model.isScanningMedia { return L.tr("media.scanning") }
+        if !model.mediaAdditionFeedback.isEmpty { return model.mediaAdditionFeedback }
         if let reason = model.startDisabledReason {
             return disabledReasonText(reason)
         }

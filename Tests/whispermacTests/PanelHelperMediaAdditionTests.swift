@@ -155,6 +155,17 @@ func expandedMediaURLsPreservesTopLevelFileOrderAndDeduplicatesFolderAndFileInpu
     #expect(additions.map(\.lastPathComponent) == ["direct.mp3", "clip.wav"])
 }
 
+@Test
+func expandedMediaURLsIgnoresEmptyAndNonexistentDirectories() async throws {
+    let root = try makeDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let empty = root.appending(path: "empty", directoryHint: .isDirectory)
+    try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
+    let missing = root.appending(path: "does-not-exist", directoryHint: .isDirectory)
+
+    #expect(await PanelHelper.expandedMediaURLs(from: [empty, missing]).isEmpty)
+}
+
 private func makeDirectory() throws -> URL {
     let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

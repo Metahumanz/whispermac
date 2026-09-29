@@ -89,6 +89,9 @@ struct RuntimeDownloadTests {
             #expect(modelURL.host() == base.host())
             #expect(vadURL.host() == base.host())
             #expect(treeURL.host() == base.host())
+            #expect(modelURL.absoluteString == "\(base.absoluteString)/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin?download=true")
+            #expect(vadURL.absoluteString == "\(base.absoluteString)/ggml-org/whisper-vad/resolve/main/\(VADModelResolver.fileName)?download=true")
+            #expect(treeURL.absoluteString == "\(base.absoluteString)/api/models/ggml-org/whisper-vad/tree/main?recursive=true")
         }
     }
 

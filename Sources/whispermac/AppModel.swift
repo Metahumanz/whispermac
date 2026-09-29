@@ -79,6 +79,7 @@ final class AppModel: ObservableObject {
     @Published var selectedResultFileID: URL?
 
     private let defaults: UserDefaults
+    private let vadModelSearchRoots: [URL]?
     private var hasPresentedInitialRuntimePrompt = false
     private var transcriptionTask: Task<Void, Never>?
     private var runtimeDownloadTask: Task<Void, Never>?
@@ -91,10 +92,12 @@ final class AppModel: ObservableObject {
 
     init(
         completionNotifier: CompletionNotifier = CompletionNotifier(),
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        vadModelSearchRoots: [URL]? = nil
     ) {
         self.completionNotifier = completionNotifier
         self.defaults = defaults
+        self.vadModelSearchRoots = vadModelSearchRoots
         let guessed = PathResolver.guessDefaults()
         let storedWhisperCLIPath = defaults.string(forKey: Keys.whisperCLIPath) ?? ""
         let resolvedWhisperCLIPath = PathResolver.resolveWhisperCLIPath(storedWhisperCLIPath)
@@ -239,10 +242,19 @@ final class AppModel: ObservableObject {
     }
 
     var resolvedVADModelPath: String {
-        VADModelResolver.resolve(vadSettings.modelPath)
+        VADModelResolver.resolve(vadSettings.modelPath, searchRoots: vadModelSearchRoots)
     }
 
     var hasResolvableVADModel: Bool { !resolvedVADModelPath.isEmpty }
+
+    /// The path currently used at runtime; automatic discovery remains an overlay
+    /// and is never written back into the user's explicit setting.
+    var vadModelDisplayPath: String { resolvedVADModelPath }
+
+    var isVADModelUsingAutomaticPath: Bool {
+        vadSettings.modelPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !resolvedVADModelPath.isEmpty
+    }
 
     var downloadableRuntimeComponents: Set<RuntimeComponent> {
         missingRuntimeComponents.subtracting([.whisperCLI])
@@ -367,6 +379,10 @@ final class AppModel: ObservableObject {
         panel.nameFieldStringValue = VADModelResolver.fileName
         guard panel.runModal() == .OK, let url = panel.url else { return }
         vadSettings.modelPath = url.path
+    }
+
+    func restoreAutomaticVADModel() {
+        vadSettings.modelPath = ""
     }
 
     func downloadVADModel() {

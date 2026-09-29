@@ -263,5 +263,9 @@
 "vad.speech_pad" = "音声前後の拡張";
 "vad.milliseconds" = "%lld ミリ秒";
 "vad.model_path" = "VAD モデル";
+"vad.model_path_unavailable" = "有効なモデルが見つかりません";
+"vad.path_automatic" = "自動検出";
+"vad.path_manual" = "手動指定";
+"vad.restore_automatic" = "自動検出に戻す";
 "vad.model_available" = "モデルを利用できます：%@";
 "vad.summary" = "有効 · しきい値 %@ · 最短音声 %@ ミリ秒 · 最短無音 %@ ミリ秒 · 拡張 %@ ミリ秒";

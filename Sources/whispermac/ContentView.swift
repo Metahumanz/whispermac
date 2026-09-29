@@ -652,9 +652,7 @@ struct SettingsSheet: View {
                     pathRow(title: L.tr("field.model_file"), text: $model.modelPath) {
                         model.chooseModel()
                     }
-                    pathRow(title: L.tr("vad.model_path"), text: $model.vadSettings.modelPath) {
-                        model.chooseVADModel()
-                    }
+                    vadModelPathRow
                     HStack(spacing: 8) {
                         StatusDot(color: model.hasResolvableVADModel ? Color(nsColor: .systemGreen) : Color(nsColor: .systemOrange))
                         Text(model.hasResolvableVADModel
@@ -749,6 +747,33 @@ struct SettingsSheet: View {
         case .unchecked, .checking: L.tr("vad.cli_checking")
         case .supported: L.tr("vad.cli_supported")
         case .unsupported: L.tr("vad.cli_unsupported")
+        }
+    }
+
+    private var vadModelPathRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            LabeledRow(title: L.tr("vad.model_path")) {
+                HStack(spacing: 8) {
+                    TextField(L.tr("vad.model_path_unavailable"), text: .constant(model.vadModelDisplayPath))
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(true)
+                        .textSelection(.enabled)
+                    Button(L.tr("button.choose")) { model.chooseVADModel() }
+                        .disabled(model.isBusy)
+                }
+            }
+            HStack(spacing: 8) {
+                Text(model.isVADModelUsingAutomaticPath ? L.tr("vad.path_automatic") : L.tr("vad.path_manual"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if !model.vadSettings.modelPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Button(L.tr("vad.restore_automatic")) { model.restoreAutomaticVADModel() }
+                        .buttonStyle(.link)
+                        .font(.caption)
+                        .disabled(model.isBusy)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

@@ -263,5 +263,9 @@
 "vad.speech_pad" = "语音前后扩展";
 "vad.milliseconds" = "%lld 毫秒";
 "vad.model_path" = "VAD 模型";
+"vad.model_path_unavailable" = "未找到有效模型";
+"vad.path_automatic" = "自动检测";
+"vad.path_manual" = "手动指定";
+"vad.restore_automatic" = "恢复自动检测";
 "vad.model_available" = "模型可用：%@";
 "vad.summary" = "已启用 · 阈值 %@ · 最短语音 %@ 毫秒 · 最短静音 %@ 毫秒 · 扩展 %@ 毫秒";

@@ -263,5 +263,9 @@
 "vad.speech_pad" = "Speech padding";
 "vad.milliseconds" = "%lld ms";
 "vad.model_path" = "VAD Model";
+"vad.model_path_unavailable" = "No valid model found";
+"vad.path_automatic" = "Automatic detection";
+"vad.path_manual" = "Manually specified";
+"vad.restore_automatic" = "Restore automatic detection";
 "vad.model_available" = "Model available: %@";
 "vad.summary" = "On · threshold %@ · minimum speech %@ ms · silence %@ ms · padding %@ ms";

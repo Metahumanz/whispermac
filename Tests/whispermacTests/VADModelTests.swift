@@ -47,6 +47,58 @@ struct VADModelTests {
         #expect(AppModel(defaults: defaults).vadSettings == model.vadSettings)
     }
 
+    @MainActor
+    @Test
+    func appModelDisplaysAutomaticPathWithoutPersistingIt() throws {
+        let root = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let modelURL = root.appending(path: VADModelResolver.fileName)
+        try writeValidModel(to: modelURL)
+        let defaults = makeDefaults()
+
+        let model = AppModel(defaults: defaults, vadModelSearchRoots: [root])
+
+        #expect(model.vadModelDisplayPath == modelURL.path)
+        #expect(model.isVADModelUsingAutomaticPath)
+        #expect(model.vadSettings.modelPath.isEmpty)
+        #expect((try? JSONDecoder().decode(VADSettings.self, from: defaults.data(forKey: "vadSettings") ?? Data()))?.modelPath.isEmpty ?? true)
+    }
+
+    @MainActor
+    @Test
+    func manualPathTakesPrecedenceAndCanRestoreAutomaticDiscovery() throws {
+        let root = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let automaticURL = root.appending(path: VADModelResolver.fileName)
+        let manualURL = root.appending(path: "manual-silero.bin")
+        try writeValidModel(to: automaticURL)
+        try writeValidModel(to: manualURL)
+        let defaults = makeDefaults()
+        let model = AppModel(defaults: defaults, vadModelSearchRoots: [root])
+
+        model.vadSettings.modelPath = manualURL.path
+        #expect(model.vadModelDisplayPath == manualURL.path)
+        #expect(!model.isVADModelUsingAutomaticPath)
+
+        model.restoreAutomaticVADModel()
+        #expect(model.vadSettings.modelPath.isEmpty)
+        #expect(model.vadModelDisplayPath == automaticURL.path)
+        #expect(model.isVADModelUsingAutomaticPath)
+    }
+
+    @MainActor
+    @Test
+    func automaticDisplayIsEmptyWhenNoModelExists() {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let defaults = makeDefaults()
+        let model = AppModel(defaults: defaults, vadModelSearchRoots: [root])
+
+        #expect(model.resolvedVADModelPath.isEmpty)
+        #expect(model.vadModelDisplayPath.isEmpty)
+        #expect(!model.isVADModelUsingAutomaticPath)
+        #expect(model.vadSettings.modelPath.isEmpty)
+    }
+
     @Test
     func automaticDiscoveryFindsPreferredModelName() throws {
         let root = try makeDirectory()
@@ -123,6 +175,13 @@ struct VADModelTests {
         let url = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
+    }
+
+    private func makeDefaults() -> UserDefaults {
+        let suiteName = "VADModelTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        return defaults
     }
 
     private func writeValidModel(to url: URL) throws {

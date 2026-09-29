@@ -108,6 +108,7 @@ struct VADModelTests {
         let model = AppModel(defaults: defaults, vadModelSearchRoots: [root])
         model.vadSettings.modelPath = root.appending(path: "missing-model.bin").path
 
+        #expect(model.vadModelDisplayPath == root.appending(path: "missing-model.bin").path)
         #expect(!model.isVADModelUsingAutomaticPath)
         #expect(!model.hasResolvableVADModel)
         #expect(model.resolvedVADModelPath.isEmpty)

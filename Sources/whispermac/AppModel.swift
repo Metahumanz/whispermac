@@ -322,7 +322,11 @@ final class AppModel: ObservableObject {
 
     /// The path currently used at runtime; automatic discovery remains an overlay
     /// and is never written back into the user's explicit setting.
-    var vadModelDisplayPath: String { resolvedVADModelPath }
+    var vadModelDisplayPath: String {
+        let configuredPath = vadSettings.modelPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !configuredPath.isEmpty { return PathResolver.expandingTilde(configuredPath) }
+        return resolvedVADModelPath
+    }
 
     var isVADModelUsingAutomaticPath: Bool {
         vadSettings.modelPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

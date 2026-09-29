@@ -35,16 +35,14 @@ func mediaFileAdditionsDeduplicatesWithinCandidates() {
 }
 
 @Test
-func mediaFileAdditionsDeduplicatesAgainstExistingCaseInsensitively() {
-    let existing = [URL(fileURLWithPath: "/tmp/media/Interview.MP4")]
-    let candidates = [
-        URL(fileURLWithPath: "/tmp/media/interview.mp4"),
-        URL(fileURLWithPath: "/tmp/media/other.mov"),
-    ]
+func mediaDedupeKeyHonorsFilesystemCaseSensitivity() {
+    let uppercase = URL(fileURLWithPath: "/tmp/media/Lecture.MP4")
+    let lowercase = URL(fileURLWithPath: "/tmp/media/lecture.mp4")
 
-    let additions = PanelHelper.mediaFileAdditions(from: candidates, existing: existing)
-
-    #expect(additions.map { $0.lastPathComponent } == ["other.mov"])
+    #expect(PanelHelper.mediaDedupeKey(for: uppercase, caseSensitive: false)
+        == PanelHelper.mediaDedupeKey(for: lowercase, caseSensitive: false))
+    #expect(PanelHelper.mediaDedupeKey(for: uppercase, caseSensitive: true)
+        != PanelHelper.mediaDedupeKey(for: lowercase, caseSensitive: true))
 }
 
 @Test
@@ -170,4 +168,60 @@ private func makeDirectory() throws -> URL {
     let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory
+}
+
+@Test
+@MainActor
+func appModelRejectsNewMediaDuringScanAndAllowsItAfterCompletion() async {
+    let suiteName = "MediaScanState-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let gate = MediaURLExpanderGate()
+    let model = AppModel(defaults: defaults, mediaURLExpander: { urls in await gate.expand(urls) })
+    let first = URL(fileURLWithPath: "/tmp/first.mp4")
+    let second = URL(fileURLWithPath: "/tmp/second.mov")
+
+    model.addMediaURLs([first])
+    #expect(model.isScanningMedia)
+    model.addMediaURLs([second])
+    await gate.waitForCallCount(1)
+    let firstCallCount = await gate.callCount
+    #expect(firstCallCount == 1)
+
+    await gate.finishNext(with: [first])
+    await model.waitForMediaScan()
+    #expect(!model.isScanningMedia)
+    #expect(model.inputFiles == [first])
+
+    model.addMediaURLs([second])
+    #expect(model.isScanningMedia)
+    await gate.waitForCallCount(2)
+    await gate.finishNext(with: [second])
+    await model.waitForMediaScan()
+    #expect(!model.isScanningMedia)
+    #expect(model.inputFiles == [first, second])
+}
+
+private actor MediaURLExpanderGate {
+    private var continuations: [CheckedContinuation<[URL], Never>] = []
+    private var startWaiters: [(Int, CheckedContinuation<Void, Never>)] = []
+    private(set) var callCount = 0
+
+    func expand(_: [URL]) async -> [URL] {
+        callCount += 1
+        let ready = startWaiters.filter { $0.0 <= callCount }
+        startWaiters.removeAll { $0.0 <= callCount }
+        ready.forEach { $0.1.resume() }
+        return await withCheckedContinuation { continuations.append($0) }
+    }
+
+    func waitForCallCount(_ count: Int) async {
+        guard callCount < count else { return }
+        await withCheckedContinuation { startWaiters.append((count, $0)) }
+    }
+
+    func finishNext(with urls: [URL]) {
+        guard !continuations.isEmpty else { return }
+        continuations.removeFirst().resume(returning: urls)
+    }
 }

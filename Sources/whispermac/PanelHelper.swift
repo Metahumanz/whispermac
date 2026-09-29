@@ -30,6 +30,11 @@ enum PanelHelper {
         return additions
     }
 
+    static func mediaDedupeKey(for url: URL, caseSensitive: Bool) -> String {
+        let path = url.standardizedFileURL.path
+        return caseSensitive ? path : path.lowercased()
+    }
+
     static func expandedMediaURLs(from candidates: [URL]) async -> [URL] {
         await Task.detached(priority: .userInitiated) {
             enumerateMediaFiles(from: candidates)
@@ -99,6 +104,8 @@ enum PanelHelper {
 // APFS is case-insensitive; compare standardized, lowercased paths.
 private extension URL {
     var mediaDedupeKey: String {
-        standardizedFileURL.path.lowercased()
+        let supportsCaseSensitiveNames = try? resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey])
+            .volumeSupportsCaseSensitiveNames
+        return PanelHelper.mediaDedupeKey(for: self, caseSensitive: supportsCaseSensitiveNames ?? false)
     }
 }

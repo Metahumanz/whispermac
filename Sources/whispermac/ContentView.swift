@@ -80,11 +80,11 @@ struct MainWindowContent: View {
             presentedSheetView(sheet)
         }
         .dropDestination(for: URL.self) { urls, _ in
-            guard !model.isRunning else { return false }
+            guard !model.isRunning, !model.isScanningMedia else { return false }
             model.addMediaURLs(urls)
             return true
         } isTargeted: { targeted in
-            isDropTargeted = targeted && !model.isRunning
+            isDropTargeted = targeted && !model.isRunning && !model.isScanningMedia
         }
         .onAppear {
             model.promptToDownloadMissingRuntimeIfNeeded()
@@ -137,7 +137,7 @@ struct MainWindowContent: View {
             } label: {
                 Label(L.tr("button.add_media"), systemImage: "plus")
             }
-            .disabled(model.isRunning)
+            .disabled(model.isRunning || model.isScanningMedia)
             .keyboardShortcut("o")
             .accessibilityHint(Text(model.isRunning ? L.tr("queue.locked") : L.tr("empty.drop.detail")))
 
@@ -176,7 +176,7 @@ struct MainWindowContent: View {
 struct TaskQueueView: View {
     @EnvironmentObject private var model: AppModel
 
-    private var isLocked: Bool { model.isRunning }
+    private var isLocked: Bool { model.isRunning || model.isScanningMedia }
 
     var body: some View {
         VStack(spacing: 0) {

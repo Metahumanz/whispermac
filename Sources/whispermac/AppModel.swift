@@ -99,21 +99,26 @@ final class AppModel: ObservableObject {
     private var vadDownloadTask: Task<Void, Never>?
     private var vadCLICheckTask: Task<Void, Never>?
     private var previewLoadGeneration = 0
-    private var activeMediaScans = 0
+    private var mediaScanTask: Task<Void, Never>?
     private lazy var historyStore = TranscriptionHistoryStore()
     private let completionNotifier: CompletionNotifier
+    private let mediaURLExpander: @Sendable ([URL]) async -> [URL]
     private var keepAwakeToken: KeepAwakeToken?
 
     init(
         completionNotifier: CompletionNotifier = CompletionNotifier(),
         defaults: UserDefaults = .standard,
         vadModelSearchRoots: [URL]? = nil,
-        huggingFaceEnvironment: [String: String]? = nil
+        huggingFaceEnvironment: [String: String]? = nil,
+        mediaURLExpander: @escaping @Sendable ([URL]) async -> [URL] = { urls in
+            await PanelHelper.expandedMediaURLs(from: urls)
+        }
     ) {
         self.completionNotifier = completionNotifier
         self.defaults = defaults
         self.vadModelSearchRoots = vadModelSearchRoots
         self.huggingFaceEnvironment = huggingFaceEnvironment ?? ProcessInfo.processInfo.environment
+        self.mediaURLExpander = mediaURLExpander
         let guessed = PathResolver.guessDefaults()
         let storedWhisperCLIPath = defaults.string(forKey: Keys.whisperCLIPath) ?? ""
         let resolvedWhisperCLIPath = PathResolver.resolveWhisperCLIPath(storedWhisperCLIPath)
@@ -375,28 +380,37 @@ final class AppModel: ObservableObject {
         // P0.1: a started batch executes a frozen snapshot; adding files mid-run
         // would desync the visible queue from that snapshot, so additions are
         // rejected until the batch ends.
-        guard !isRunning else { return }
+        guard !isRunning, !isScanningMedia else { return }
         guard !urls.isEmpty else { return }
-        activeMediaScans += 1
         isScanningMedia = true
         mediaAdditionFeedback = L.tr("media.scanning")
         statusText = L.tr("media.scanning")
-        Task { [weak self] in
-            let expanded = await PanelHelper.expandedMediaURLs(from: urls)
-            guard let self else { return }
-            let additions = PanelHelper.mediaFileAdditions(from: expanded, existing: self.inputFiles)
-            if !additions.isEmpty {
-                self.inputFiles.append(contentsOf: additions)
-                if self.outputDirectoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    self.outputDirectoryPath = ""
-                }
-                self.mediaAdditionFeedback = L.tr("media.added_count", additions.count)
-            } else {
-                self.mediaAdditionFeedback = L.tr("media.no_supported_files")
+        mediaScanTask = Task { [weak self] in
+            await self?.completeMediaAdditionScan(urls)
+        }
+    }
+
+    /// Awaits the one active scan; also provides a deterministic completion
+    /// point for state-level tests without sleeps or polling.
+    func waitForMediaScan() async {
+        await mediaScanTask?.value
+    }
+
+    private func completeMediaAdditionScan(_ urls: [URL]) async {
+        defer {
+            isScanningMedia = false
+            mediaScanTask = nil
+        }
+        let expanded = await mediaURLExpander(urls)
+        let additions = PanelHelper.mediaFileAdditions(from: expanded, existing: inputFiles)
+        if !additions.isEmpty {
+            inputFiles.append(contentsOf: additions)
+            if outputDirectoryPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                outputDirectoryPath = ""
             }
-            self.activeMediaScans = max(self.activeMediaScans - 1, 0)
-            self.isScanningMedia = self.activeMediaScans > 0
-            if self.isScanningMedia { self.mediaAdditionFeedback = L.tr("media.scanning") }
+            mediaAdditionFeedback = L.tr("media.added_count", additions.count)
+        } else {
+            mediaAdditionFeedback = L.tr("media.no_supported_files")
         }
     }
 

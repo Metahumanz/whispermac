@@ -268,4 +268,14 @@
 "vad.path_manual" = "手動指定";
 "vad.restore_automatic" = "自動検出に戻す";
 "vad.model_available" = "モデルを利用できます：%@";
+"hf.section" = "モデルのダウンロード";
+"hf.source.label" = "Hugging Face のダウンロード元";
+"hf.source.official" = "公式 Hugging Face";
+"hf.source.mirror" = "HF-Mirror";
+"hf.source.custom" = "カスタム";
+"hf.endpoint.custom" = "カスタム URL";
+"hf.endpoint.current" = "現在のアドレス";
+"hf.endpoint.invalid" = "ダウンロード先が無効です";
+"hf.endpoint.invalid_detail" = "ホスト名を含む有効な HTTP または HTTPS URL を入力してください。修正されるまでダウンロードは無効です。";
+"hf.endpoint.environment_override" = "%@ が設定されているため、すべてのモデルとメタデータのダウンロードでこの設定より優先されます。";
 "vad.summary" = "有効 · しきい値 %@ · 最短音声 %@ ミリ秒 · 最短無音 %@ ミリ秒 · 拡張 %@ ミリ秒";

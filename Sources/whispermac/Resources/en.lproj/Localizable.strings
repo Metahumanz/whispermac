@@ -268,4 +268,14 @@
 "vad.path_manual" = "Manually specified";
 "vad.restore_automatic" = "Restore automatic detection";
 "vad.model_available" = "Model available: %@";
+"hf.section" = "Model Downloads";
+"hf.source.label" = "Hugging Face source";
+"hf.source.official" = "Official Hugging Face";
+"hf.source.mirror" = "HF-Mirror";
+"hf.source.custom" = "Custom";
+"hf.endpoint.custom" = "Custom URL";
+"hf.endpoint.current" = "Current address";
+"hf.endpoint.invalid" = "Invalid download endpoint";
+"hf.endpoint.invalid_detail" = "Enter a valid HTTP or HTTPS URL with a host. Downloads are disabled until it is corrected.";
+"hf.endpoint.environment_override" = "%@ is set and overrides this selection for all model and metadata downloads.";
 "vad.summary" = "On · threshold %@ · minimum speech %@ ms · silence %@ ms · padding %@ ms";

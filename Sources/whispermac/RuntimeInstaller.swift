@@ -48,6 +48,7 @@ enum RuntimeInstaller {
 
     static func install(
         missing components: Set<RuntimeComponent>,
+        baseURL: URL = HuggingFaceEndpoint.defaultBaseURL,
         onEvent: (@Sendable (RuntimeInstallerEvent) async -> Void)? = nil
     ) async throws -> RuntimeInstallResult {
         precondition(!components.contains(.whisperCLI), "whisper-cli must be bundled at packaging time")
@@ -57,7 +58,7 @@ enum RuntimeInstaller {
         var installedModelPath: String?
         if components.contains(.model) || components.contains(.coreMLEncoder) {
             await emit(.log(L.tr("log.runtime_download_component_model")), to: onEvent)
-            installedModelPath = try await installModelAssets(onEvent: onEvent)
+            installedModelPath = try await installModelAssets(baseURL: baseURL, onEvent: onEvent)
         }
 
         await emit(.log(L.tr("log.runtime_download_complete")), to: onEvent)
@@ -67,12 +68,12 @@ enum RuntimeInstaller {
     /// Downloads only the compact Silero VAD model; it does not touch the
     /// Whisper model or Core ML encoder already installed on the machine.
     static func installVADModel(
+        baseURL: URL = HuggingFaceEndpoint.defaultBaseURL,
         onEvent: (@Sendable (RuntimeInstallerEvent) async -> Void)? = nil
     ) async throws -> String {
         let modelsDirectory = PathResolver.downloadedRuntimeRoot
             .appending(path: "Models", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
-        let baseURL = HuggingFaceEndpoint.resolved()
         let digestSource = await fetchDigests(baseURL: baseURL, repository: vadRepository, onEvent: onEvent)
         let modelURL = HuggingFaceEndpoint.assetURL(
             fileName: VADModelResolver.fileName,
@@ -105,6 +106,7 @@ enum RuntimeInstaller {
     }
 
     private static func installModelAssets(
+        baseURL: URL,
         onEvent: (@Sendable (RuntimeInstallerEvent) async -> Void)? = nil
     ) async throws -> String {
         let modelsDirectory = PathResolver.downloadedRuntimeRoot
@@ -113,7 +115,6 @@ enum RuntimeInstaller {
 
         try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
 
-        let baseURL = HuggingFaceEndpoint.resolved()
         let digestSource = await fetchDigests(baseURL: baseURL, onEvent: onEvent)
         let digests = digestSource.digests
 

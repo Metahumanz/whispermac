@@ -669,7 +669,7 @@ struct SettingsSheet: View {
                             }
                         } else if !model.hasResolvableVADModel {
                             Button(L.tr("vad.download")) { model.downloadVADModel() }
-                                .disabled(model.isBusy)
+                                .disabled(model.isBusy || model.isHuggingFaceEndpointInvalid)
                         }
                     }
                     if model.isDownloadingVADModel {
@@ -684,6 +684,48 @@ struct SettingsSheet: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)
                         }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            GroupBox(L.tr("hf.section")) {
+                VStack(alignment: .leading, spacing: 10) {
+                    LabeledRow(title: L.tr("hf.source.label")) {
+                        Picker(L.tr("hf.source.label"), selection: $model.huggingFaceDownloadSource) {
+                            ForEach(HuggingFaceDownloadSource.allCases) { source in
+                                Text(source.displayName).tag(source)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        .frame(width: 230, alignment: .leading)
+                        .disabled(model.isBusy)
+                    }
+                    if model.huggingFaceDownloadSource == .custom {
+                        LabeledRow(title: L.tr("hf.endpoint.custom")) {
+                            TextField("https://example.com", text: $model.customHuggingFaceEndpoint)
+                                .textFieldStyle(.roundedBorder)
+                                .disabled(model.isBusy)
+                        }
+                    }
+                    LabeledRow(title: L.tr("hf.endpoint.current")) {
+                        Text(model.huggingFaceEndpointDisplayText)
+                            .font(.callout.monospaced())
+                            .foregroundStyle(model.isHuggingFaceEndpointInvalid ? Color(nsColor: .systemOrange) : .secondary)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if model.isHuggingFaceEndpointInvalid {
+                        Text(L.tr("hf.endpoint.invalid_detail"))
+                            .font(.caption)
+                            .foregroundStyle(Color(nsColor: .systemOrange))
+                    }
+                    if model.hasHuggingFaceEnvironmentOverride {
+                        Text(L.tr("hf.endpoint.environment_override", HuggingFaceEndpoint.environmentVariableName))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .padding(.vertical, 4)
@@ -800,6 +842,7 @@ struct SettingsSheet: View {
                 Button(L.tr("button.download_runtime")) {
                     model.startRuntimeDownload()
                 }
+                .disabled(model.isHuggingFaceEndpointInvalid)
                 Text(L.tr("privacy.download"))
                     .font(.caption)
                     .foregroundStyle(.secondary)

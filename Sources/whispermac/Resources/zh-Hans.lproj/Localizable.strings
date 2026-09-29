@@ -268,4 +268,14 @@
 "vad.path_manual" = "手动指定";
 "vad.restore_automatic" = "恢复自动检测";
 "vad.model_available" = "模型可用：%@";
+"hf.section" = "模型下载";
+"hf.source.label" = "Hugging Face 下载源";
+"hf.source.official" = "官方 Hugging Face";
+"hf.source.mirror" = "HF-Mirror 镜像";
+"hf.source.custom" = "自定义";
+"hf.endpoint.custom" = "自定义网址";
+"hf.endpoint.current" = "当前地址";
+"hf.endpoint.invalid" = "下载源地址无效";
+"hf.endpoint.invalid_detail" = "请输入有效的 HTTP 或 HTTPS 地址并包含主机名。修正前将禁用下载。";
+"hf.endpoint.environment_override" = "检测到 %@ 环境变量，它会覆盖此设置，并用于所有模型及元数据下载。";
 "vad.summary" = "已启用 · 阈值 %@ · 最短语音 %@ 毫秒 · 最短静音 %@ 毫秒 · 扩展 %@ 毫秒";

@@ -45,6 +45,16 @@ final class AppModel: ObservableObject {
             if vadSettings.isEnabled { refreshVADCLICapability() }
         }
     }
+    @Published var huggingFaceDownloadSource: HuggingFaceDownloadSource {
+        didSet { store(huggingFaceDownloadSource.rawValue, forKey: Keys.huggingFaceDownloadSource) }
+    }
+    @Published var customHuggingFaceEndpoint: String {
+        didSet {
+            if HuggingFaceEndpoint.sanitizedBaseURL(from: customHuggingFaceEndpoint) != nil {
+                defaults.set(customHuggingFaceEndpoint, forKey: Keys.customHuggingFaceEndpoint)
+            }
+        }
+    }
     @Published var logs: [String]
     @Published var isRunning = false
     @Published var isCancelling = false
@@ -118,6 +128,20 @@ final class AppModel: ObservableObject {
         let storedSourceLanguage = defaults.string(forKey: Keys.sourceLanguage) ?? WhisperLanguage.autoCode
         let storedVADSettings = defaults.data(forKey: Keys.vadSettings)
             .flatMap { try? JSONDecoder().decode(VADSettings.self, from: $0) } ?? .default
+        let storedHFSource = defaults.string(forKey: Keys.huggingFaceDownloadSource)
+            .flatMap(HuggingFaceDownloadSource.init(rawValue:))
+        let legacyHFEndpoint = defaults.string(forKey: HuggingFaceEndpoint.storedValueDefaultsKey)
+        let initialHFSource: HuggingFaceDownloadSource = {
+            if let storedHFSource { return storedHFSource }
+            guard let legacyHFEndpoint else { return .official }
+            guard let normalized = HuggingFaceEndpoint.sanitizedBaseURL(from: legacyHFEndpoint) else { return .custom }
+            if normalized == HuggingFaceEndpoint.hfMirrorBaseURL { return .hfMirror }
+            if normalized == HuggingFaceEndpoint.defaultBaseURL { return .official }
+            return .custom
+        }()
+        let initialCustomHFEndpoint = defaults.string(forKey: Keys.customHuggingFaceEndpoint)
+            ?? (initialHFSource == .custom ? legacyHFEndpoint : nil)
+            ?? ""
         let initialSourceLanguage = WhisperLanguage.isSupported(storedSourceLanguage)
             ? storedSourceLanguage
             : WhisperLanguage.autoCode
@@ -132,6 +156,11 @@ final class AppModel: ObservableObject {
         sourceLanguage = initialSourceLanguage
         translatesToEnglish = defaults.bool(forKey: Keys.translatesToEnglish)
         vadSettings = storedVADSettings
+        huggingFaceDownloadSource = initialHFSource
+        customHuggingFaceEndpoint = initialCustomHFEndpoint
+        if storedHFSource == nil {
+            defaults.set(initialHFSource.rawValue, forKey: Keys.huggingFaceDownloadSource)
+        }
 
         logs = [
             L.tr("log.default_model"),
@@ -246,6 +275,24 @@ final class AppModel: ObservableObject {
     }
 
     var hasResolvableVADModel: Bool { !resolvedVADModelPath.isEmpty }
+
+    var hasHuggingFaceEnvironmentOverride: Bool {
+        ProcessInfo.processInfo.environment[HuggingFaceEndpoint.environmentVariableName] != nil
+    }
+
+    var resolvedHuggingFaceBaseURL: URL? {
+        HuggingFaceEndpoint.resolved(
+            source: huggingFaceDownloadSource,
+            customValue: customHuggingFaceEndpoint,
+            environment: ProcessInfo.processInfo.environment
+        )
+    }
+
+    var isHuggingFaceEndpointInvalid: Bool { resolvedHuggingFaceBaseURL == nil }
+
+    var huggingFaceEndpointDisplayText: String {
+        resolvedHuggingFaceBaseURL?.absoluteString ?? L.tr("hf.endpoint.invalid")
+    }
 
     /// The path currently used at runtime; automatic discovery remains an overlay
     /// and is never written back into the user's explicit setting.
@@ -387,6 +434,10 @@ final class AppModel: ObservableObject {
 
     func downloadVADModel() {
         guard !isBusy else { return }
+        guard resolvedHuggingFaceBaseURL != nil else {
+            statusText = L.tr("hf.endpoint.invalid")
+            return
+        }
         vadDownloadTask = Task { [weak self] in await self?.installVADModel() }
     }
 
@@ -450,6 +501,10 @@ final class AppModel: ObservableObject {
 
     func startRuntimeDownload() {
         guard !isBusy else { return }
+        guard resolvedHuggingFaceBaseURL != nil else {
+            statusText = L.tr("hf.endpoint.invalid")
+            return
+        }
         let missing = downloadableRuntimeComponents
         guard !missing.isEmpty else { return }
 
@@ -976,7 +1031,8 @@ final class AppModel: ObservableObject {
         appendLog(L.tr("log.runtime_download_start"))
 
         do {
-            let result = try await RuntimeInstaller.install(missing: missing) { [weak self] event in
+            guard let baseURL = resolvedHuggingFaceBaseURL else { throw HuggingFaceDownloadError.invalidEndpoint }
+            let result = try await RuntimeInstaller.install(missing: missing, baseURL: baseURL) { [weak self] event in
                 await MainActor.run {
                     guard let self else { return }
                     switch event {
@@ -1018,7 +1074,8 @@ final class AppModel: ObservableObject {
         downloadTotalBytes = nil
         statusText = L.tr("status.runtime_preparing_download")
         do {
-            let path = try await RuntimeInstaller.installVADModel { [weak self] event in
+            guard let baseURL = resolvedHuggingFaceBaseURL else { throw HuggingFaceDownloadError.invalidEndpoint }
+            let path = try await RuntimeInstaller.installVADModel(baseURL: baseURL) { [weak self] event in
                 await MainActor.run {
                     guard let self else { return }
                     switch event {
@@ -1104,4 +1161,11 @@ private enum Keys {
     static let sourceLanguage = "sourceLanguage"
     static let translatesToEnglish = "translatesToEnglish"
     static let vadSettings = "vadSettings"
+    static let huggingFaceDownloadSource = "huggingFaceDownloadSource"
+    static let customHuggingFaceEndpoint = "customHuggingFaceEndpoint"
+}
+
+private enum HuggingFaceDownloadError: LocalizedError {
+    case invalidEndpoint
+    var errorDescription: String? { L.tr("hf.endpoint.invalid") }
 }

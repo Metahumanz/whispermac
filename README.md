@@ -51,11 +51,11 @@ assemble a `whisper.cpp` CLI workflow by hand. WhisperMac is the third path — 
 
 | | Feature | Details |
 | --- | --- | --- |
-| 🗂 | **Batch queue** | Drag in MP4 / MOV / M4V / M4A / MP3 / WAV / AAC / FLAC, deduplicated, removable before start |
+| 🗂 | **Batch queue** | Drag media files or folders; folders are recursively scanned for supported formats, then deduplicated and removable before start |
 | 📄 | **Export formats** | `TXT` · `SRT` · `VTT` · `JSON` — pick any combination per task |
 | 🏠 | **Sensible outputs** | By default each transcript lands next to its source file; or choose one shared output folder |
 | ⚡ | **Acceleration modes** | `GPU only` (Metal) or `GPU + ANE` (Metal + Core ML encoder); missing encoder falls back to GPU with a notice |
-| 📥 | **Built-in runtime download** | Downloads `ggml-large-v3-turbo` and its encoder archive from Hugging Face with SHA-256 verification, progress, and cancel |
+| 📥 | **Built-in runtime download** | Downloads `ggml-large-v3-turbo`, its encoder archive, and optional VAD model; choose official Hugging Face, HF-Mirror, or a custom endpoint |
 | 🎙️ | **Silero voice activity detection** | Optional CPU-based speech detection with adjustable threshold, duration and padding; download the 864 KB model in Settings |
 | 📡 | **Live transcript** | Segments stream in while whisper works, with a follow-latest toggle |
 | 👀 | **SRT preview** | Read the resulting subtitles in-app right after a batch finishes |
@@ -143,6 +143,11 @@ VAD can reduce work on recordings with long silences, but may miss quiet speech
 or singing. It detects activity only: it does not separate speakers from music,
 create semantic sentence breaks, or use an LLM to correct subtitles. See the
 [VAD setup and CLI example](docs/installation.md#silero-vad).
+
+Drop a folder onto the workspace to recursively add supported media from its
+subfolders. Download source selection and custom Hugging Face endpoints are in
+**Settings → Model Downloads**; `WHISPERMAC_HF_ENDPOINT` overrides the UI
+selection when set.
 
 ## 📸 Interface
 

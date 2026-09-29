@@ -310,7 +310,6 @@ final class AppModel: ObservableObject {
 
     var isVADModelUsingAutomaticPath: Bool {
         vadSettings.modelPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !resolvedVADModelPath.isEmpty
     }
 
     var downloadableRuntimeComponents: Set<RuntimeComponent> {

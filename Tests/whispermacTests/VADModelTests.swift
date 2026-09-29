@@ -95,8 +95,22 @@ struct VADModelTests {
 
         #expect(model.resolvedVADModelPath.isEmpty)
         #expect(model.vadModelDisplayPath.isEmpty)
-        #expect(!model.isVADModelUsingAutomaticPath)
+        #expect(model.isVADModelUsingAutomaticPath)
+        #expect(!model.hasResolvableVADModel)
         #expect(model.vadSettings.modelPath.isEmpty)
+    }
+
+    @MainActor
+    @Test
+    func invalidManualPathRemainsManualAndUnavailable() {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let defaults = makeDefaults()
+        let model = AppModel(defaults: defaults, vadModelSearchRoots: [root])
+        model.vadSettings.modelPath = root.appending(path: "missing-model.bin").path
+
+        #expect(!model.isVADModelUsingAutomaticPath)
+        #expect(!model.hasResolvableVADModel)
+        #expect(model.resolvedVADModelPath.isEmpty)
     }
 
     @Test

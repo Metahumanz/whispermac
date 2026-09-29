@@ -103,6 +103,10 @@ final class AppModel: ObservableObject {
     private lazy var historyStore = TranscriptionHistoryStore()
     private let completionNotifier: CompletionNotifier
     private let mediaURLExpander: @Sendable ([URL]) async -> [URL]
+    private let vadModelInstaller: @Sendable (
+        URL,
+        (@Sendable (RuntimeInstallerEvent) async -> Void)?
+    ) async throws -> String
     private var keepAwakeToken: KeepAwakeToken?
 
     init(
@@ -112,6 +116,12 @@ final class AppModel: ObservableObject {
         huggingFaceEnvironment: [String: String]? = nil,
         mediaURLExpander: @escaping @Sendable ([URL]) async -> [URL] = { urls in
             await PanelHelper.expandedMediaURLs(from: urls)
+        },
+        vadModelInstaller: @escaping @Sendable (
+            URL,
+            (@Sendable (RuntimeInstallerEvent) async -> Void)?
+        ) async throws -> String = { baseURL, onEvent in
+            try await RuntimeInstaller.installVADModel(baseURL: baseURL, onEvent: onEvent)
         }
     ) {
         self.completionNotifier = completionNotifier
@@ -119,6 +129,7 @@ final class AppModel: ObservableObject {
         self.vadModelSearchRoots = vadModelSearchRoots
         self.huggingFaceEnvironment = huggingFaceEnvironment ?? ProcessInfo.processInfo.environment
         self.mediaURLExpander = mediaURLExpander
+        self.vadModelInstaller = vadModelInstaller
         let guessed = PathResolver.guessDefaults()
         let storedWhisperCLIPath = defaults.string(forKey: Keys.whisperCLIPath) ?? ""
         let resolvedWhisperCLIPath = PathResolver.resolveWhisperCLIPath(storedWhisperCLIPath)
@@ -480,6 +491,10 @@ final class AppModel: ObservableObject {
 
     func cancelVADModelDownload() {
         vadDownloadTask?.cancel()
+    }
+
+    func waitForVADDownload() async {
+        await vadDownloadTask?.value
     }
 
     func openOutputDirectory() {
@@ -1112,7 +1127,7 @@ final class AppModel: ObservableObject {
         statusText = L.tr("status.runtime_preparing_download")
         do {
             guard let baseURL = resolvedHuggingFaceBaseURL else { throw HuggingFaceDownloadError.invalidEndpoint }
-            let path = try await RuntimeInstaller.installVADModel(baseURL: baseURL) { [weak self] event in
+            let path = try await vadModelInstaller(baseURL) { [weak self] event in
                 await MainActor.run {
                     guard let self else { return }
                     switch event {
@@ -1124,7 +1139,10 @@ final class AppModel: ObservableObject {
                     }
                 }
             }
-            vadSettings.modelPath = path
+            vadSettings.modelPath = ""
+            guard !resolvedVADModelPath.isEmpty else {
+                throw VADModelResolutionError.missing(path)
+            }
             statusText = L.tr("status.runtime_ready")
         } catch is CancellationError {
             statusText = L.tr("status.download_cancelled")

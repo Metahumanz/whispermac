@@ -113,6 +113,72 @@ struct VADModelTests {
         #expect(model.resolvedVADModelPath.isEmpty)
     }
 
+    @MainActor
+    @Test
+    func downloadingVADInAutomaticModeKeepsPathUnsetAndAutomaticallyResolvable() async throws {
+        let root = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let installedModel = root.appending(path: VADModelResolver.fileName)
+        let defaults = makeDefaults()
+        let model = AppModel(
+            defaults: defaults,
+            vadModelSearchRoots: [root],
+            huggingFaceEnvironment: [:],
+            vadModelInstaller: { _, _ in
+                var contents = VADModelResolver.requiredHeader
+                contents.append(Data(repeating: 0, count: Int(VADModelResolver.minimumBytes) - contents.count))
+                try contents.write(to: installedModel)
+                return installedModel.path
+            }
+        )
+        model.vadSettings.isEnabled = true
+        #expect(model.isVADModelUsingAutomaticPath)
+        #expect(!model.hasResolvableVADModel)
+
+        model.downloadVADModel()
+        await model.waitForVADDownload()
+
+        #expect(model.vadSettings.modelPath.isEmpty)
+        #expect(model.isVADModelUsingAutomaticPath)
+        #expect(model.resolvedVADModelPath == installedModel.path)
+        #expect(model.hasResolvableVADModel)
+        let persisted = try #require(defaults.data(forKey: "vadSettings"))
+        #expect(try JSONDecoder().decode(VADSettings.self, from: persisted).modelPath.isEmpty)
+    }
+
+    @MainActor
+    @Test
+    func downloadingDefaultVADFromInvalidManualPathRestoresAutomaticMode() async throws {
+        let root = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let installedModel = root.appending(path: VADModelResolver.fileName)
+        let missingManualPath = root.appending(path: "moved-away-model.bin").path
+        let defaults = makeDefaults()
+        let model = AppModel(
+            defaults: defaults,
+            vadModelSearchRoots: [root],
+            huggingFaceEnvironment: [:],
+            vadModelInstaller: { _, _ in
+                var contents = VADModelResolver.requiredHeader
+                contents.append(Data(repeating: 0, count: Int(VADModelResolver.minimumBytes) - contents.count))
+                try contents.write(to: installedModel)
+                return installedModel.path
+            }
+        )
+        model.vadSettings = VADSettings(isEnabled: true, modelPath: missingManualPath)
+        #expect(!model.isVADModelUsingAutomaticPath)
+        #expect(!model.hasResolvableVADModel)
+
+        model.downloadVADModel()
+        await model.waitForVADDownload()
+
+        #expect(model.vadSettings.modelPath.isEmpty)
+        #expect(model.isVADModelUsingAutomaticPath)
+        #expect(model.resolvedVADModelPath == installedModel.path)
+        let persisted = try #require(defaults.data(forKey: "vadSettings"))
+        #expect(try JSONDecoder().decode(VADSettings.self, from: persisted).modelPath.isEmpty)
+    }
+
     @Test
     func automaticDiscoveryFindsPreferredModelName() throws {
         let root = try makeDirectory()

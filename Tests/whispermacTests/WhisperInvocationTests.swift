@@ -160,7 +160,7 @@ func srtAndJsonFormatFlagsAreOrderedByRawValue() throws {
 
 @Test
 func exactArgumentOrderForTwoFileBatch() {
-    // Canonical order: model, -f/-of pairs, -l <language>, -pp, [--translate], format flags sorted by rawValue.
+    // Canonical order: model, -f/-of pairs, language/progress/context, [--translate], sorted formats.
     // --translate is a mode modifier grouped with the language block; format flags keep their
     // deterministic rawValue sort (json < srt < txt < vtt).
     let arguments = WhisperInvocation.arguments(
@@ -180,6 +180,7 @@ func exactArgumentOrderForTwoFileBatch() {
         "-of", "/out/b",
         "-l", "zh",
         "-pp",
+        "-mc", "0",
         "--translate",
         "-osrt",
         "-otxt",
@@ -187,14 +188,14 @@ func exactArgumentOrderForTwoFileBatch() {
 }
 
 @Test
-func disabledVADPreservesExactLegacyArguments() {
+func disabledVADStillDisablesTextHistory() {
     let arguments = WhisperInvocation.arguments(
         modelPath: "/models/ggml.bin",
         wavPaths: ["/tmp/a.wav"],
         outputPrefixes: ["/out/a"],
         formats: [.txt]
     )
-    #expect(arguments == ["-m", "/models/ggml.bin", "-f", "/tmp/a.wav", "-of", "/out/a", "-l", "auto", "-pp", "-otxt"])
+    #expect(arguments == ["-m", "/models/ggml.bin", "-f", "/tmp/a.wav", "-of", "/out/a", "-l", "auto", "-pp", "-mc", "0", "-otxt"])
 }
 
 @Test
@@ -232,4 +233,53 @@ func legacyPersistedFormatRawValuesDecodeUnchanged() {
     #expect(Set(OutputFormat.allCases.map(\.rawValue)) == ["txt", "srt", "vtt", "json"])
     #expect(OutputFormat.vtt.whisperArgument == "-ovtt")
     #expect(OutputFormat.json.whisperArgument == "-oj")
+}
+
+@Test(arguments: [false, true])
+func textHistoryIsDisabledRegardlessOfVAD(enabled: Bool) throws {
+    var vad = VADSettings.default
+    vad.isEnabled = enabled
+    let arguments = WhisperInvocation.arguments(
+        modelPath: "/models/ggml.bin",
+        wavPaths: ["/tmp/a.wav", "/tmp/b.wav"],
+        outputPrefixes: ["/out/a", "/out/b"],
+        formats: [.srt],
+        vadSettings: vad
+    )
+    let index = try #require(arguments.firstIndex(of: "-mc"))
+    #expect(arguments[index + 1] == "0")
+    #expect(arguments.filter { $0 == "-mc" }.count == 1)
+    // Keep temperature fallback available to recover from bad decoding.
+    #expect(!arguments.contains("-nf"))
+    #expect(!arguments.contains("--no-fallback"))
+}
+
+@Test(arguments: [false, true])
+func enabledTextContextUsesEngineDefaultWithEitherVADMode(vadEnabled: Bool) {
+    var vad = VADSettings.default
+    vad.isEnabled = vadEnabled
+    let arguments = WhisperInvocation.arguments(
+        modelPath: "/models/ggml.bin",
+        wavPaths: ["/tmp/a.wav"],
+        outputPrefixes: ["/out/a"],
+        formats: [.srt],
+        usesTextContext: true,
+        vadSettings: vad
+    )
+    #expect(!arguments.contains("-mc"))
+    #expect(!arguments.contains("--max-context"))
+}
+
+@MainActor
+@Test
+func textContextDefaultsOffAndPersistsBothChoices() {
+    let suite = "TextContextTests-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suite)!
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let model = AppModel(defaults: defaults)
+    #expect(!model.usesTextContext)
+    model.usesTextContext = true
+    #expect(AppModel(defaults: defaults).usesTextContext)
+    model.usesTextContext = false
+    #expect(!AppModel(defaults: defaults).usesTextContext)
 }

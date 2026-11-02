@@ -302,6 +302,7 @@ struct SetupWorkspaceView: View {
                 defaultsRow(L.tr("label.output_directory"), outputLocationDisplayText(model.outputDirectoryPath))
                 defaultsRow(L.tr("label.export_formats"), formatsSummaryText(model.outputFormats))
                 defaultsRow(L.tr("label.audio_language"), languageDisplayName(forCode: model.sourceLanguage))
+                defaultsRow(L.tr("text_context.title"), model.usesTextContext ? L.tr("common.on") : L.tr("common.off"))
                 defaultsRow(L.tr("vad.title"), model.vadSettings.isEnabled ? L.tr("common.on") : L.tr("common.off"))
             }
         }
@@ -331,6 +332,7 @@ struct SetupWorkspaceView: View {
                 SectionHeader(title: L.tr("options.section.transcribe"))
                 languageRow
                 translateRow
+                textContextRow
             }
 
             Divider()
@@ -437,6 +439,18 @@ struct SetupWorkspaceView: View {
                 Toggle(L.tr("toggle.translate_to_english"), isOn: $model.translatesToEnglish)
                     .disabled(model.isBusy)
                 Text(L.tr("hint.translate_to_english"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var textContextRow: some View {
+        LabeledRow(title: L.tr("text_context.title")) {
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle(L.tr("text_context.enable"), isOn: $model.usesTextContext)
+                    .disabled(model.isBusy)
+                Text(L.tr("text_context.hint"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -837,6 +851,7 @@ struct RunWorkspaceView: View {
                     L.tr("label.acceleration_mode"),
                     effectiveAccelerationText(snapshot)
                 )
+                snapshotRow(L.tr("text_context.title"), snapshot.usesTextContext ? L.tr("common.on") : L.tr("common.off"))
                 snapshotRow(L.tr("vad.title"), vadSummary(snapshot.vadSettings))
             }
             .padding(.top, 8)

@@ -283,3 +283,14 @@
 "hf.endpoint.invalid_detail" = "ホスト名を含む有効な HTTP または HTTPS URL を入力してください。修正されるまでダウンロードは無効です。";
 "hf.endpoint.environment_override" = "%@ が設定されているため、すべてのモデルとメタデータのダウンロードでこの設定より優先されます。";
 "vad.summary" = "有効 · しきい値 %@ · 最短音声 %@ ミリ秒 · 最短無音 %@ ミリ秒 · 拡張 %@ ミリ秒";
+
+"log.diagnostic_file" = "診断ログ：%@";
+"log.diagnostic_unavailable" = "診断ログを作成できませんでした。文字起こしは続行します。";
+
+"text_context.title" = "前の区間のテキスト";
+
+"text_context.enable" = "前の区間の認識結果を参照";
+
+"text_context.hint" = "区間間の用語の一貫性を改善できますが、誤認識が繰り返される場合があります。初期設定はオフです。長い録音で繰り返しが発生する場合はオフにしてください。";
+
+"log.text_context" = "前の区間のテキスト：%@";

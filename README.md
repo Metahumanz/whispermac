@@ -149,6 +149,8 @@ subfolders. Download source selection and custom Hugging Face endpoints are in
 **Settings → Model Downloads**; `WHISPERMAC_HF_ENDPOINT` overrides the UI
 selection when set.
 
+The Previous-text context toggle under Adjust Options → Transcription is saved between launches. It is off by default, using `--max-context 0` to prevent incorrect text from feeding back into subsequent audio windows and causing long repetition loops. This can reduce wording consistency across windows and applies with or without VAD. Each batch saves commands, raw output, and exit results under `~/Library/Logs/WhisperMac/`. These local logs include transcript text and can be deleted manually.
+
 ## 📸 Interface
 
 | Ready (中文) | Running | Complete (日本語) |

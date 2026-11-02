@@ -283,3 +283,14 @@
 "hf.endpoint.invalid_detail" = "请输入有效的 HTTP 或 HTTPS 地址并包含主机名。修正前将禁用下载。";
 "hf.endpoint.environment_override" = "检测到 %@ 环境变量，它会覆盖此设置，并用于所有模型及元数据下载。";
 "vad.summary" = "已启用 · 阈值 %@ · 最短语音 %@ 毫秒 · 最短静音 %@ 毫秒 · 扩展 %@ 毫秒";
+
+"log.diagnostic_file" = "诊断日志：%@";
+"log.diagnostic_unavailable" = "无法创建诊断日志，将继续转写。";
+
+"text_context.title" = "跨窗口文字上下文";
+
+"text_context.enable" = "引用前一段识别文本";
+
+"text_context.hint" = "开启后可改善前后用词一致性，但误识别可能在后续片段中反复传播。默认关闭；长录音出现重复时建议关闭。";
+
+"log.text_context" = "跨窗口文字上下文：%@";

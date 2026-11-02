@@ -37,6 +37,9 @@ final class AppModel: ObservableObject {
     @Published var translatesToEnglish: Bool {
         didSet { store(translatesToEnglish, forKey: Keys.translatesToEnglish) }
     }
+    @Published var usesTextContext: Bool {
+        didSet { store(usesTextContext, forKey: Keys.usesTextContext) }
+    }
     @Published var vadSettings: VADSettings {
         didSet {
             if let data = try? JSONEncoder().encode(vadSettings) {
@@ -177,6 +180,7 @@ final class AppModel: ObservableObject {
         outputFormats = selectedFormats
         sourceLanguage = initialSourceLanguage
         translatesToEnglish = defaults.bool(forKey: Keys.translatesToEnglish)
+        usesTextContext = defaults.bool(forKey: Keys.usesTextContext)
         vadSettings = storedVADSettings
         huggingFaceDownloadSource = initialHFSource
         customHuggingFaceEndpoint = initialCustomHFEndpoint
@@ -619,6 +623,7 @@ final class AppModel: ObservableObject {
             outputFormats: outputFormats,
             sourceLanguage: sourceLanguage,
             translatesToEnglish: translatesToEnglish,
+            usesTextContext: usesTextContext,
             vadSettings: {
                 var settings = vadSettings
                 if settings.isEnabled { settings.modelPath = resolvedVADModelPath }
@@ -731,6 +736,7 @@ final class AppModel: ObservableObject {
         appendLog(L.tr("log.start_files", snapshot.inputFiles.count))
         appendLog(L.tr("log.requested_mode", snapshot.accelerationMode.title))
         appendLog(L.tr("log.expected_mode", modelPlan.effectiveMode.title))
+        appendLog(L.tr("log.text_context", snapshot.usesTextContext ? L.tr("log.enabled") : L.tr("log.disabled")))
         appendLog(L.tr("log.vad_enabled", snapshot.vadSettings.isEnabled ? L.tr("log.enabled") : L.tr("log.disabled")))
         if snapshot.vadSettings.isEnabled {
             let vadModelName = URL(fileURLWithPath: snapshot.vadSettings.modelPath).lastPathComponent
@@ -771,6 +777,7 @@ final class AppModel: ObservableObject {
                 formats: snapshot.outputFormats,
                 sourceLanguage: snapshot.sourceLanguage,
                 translatesToEnglish: snapshot.translatesToEnglish,
+                usesTextContext: snapshot.usesTextContext,
                 vadSettings: snapshot.vadSettings,
                 onInputStageChange: { [weak self] index, stage in
                     await MainActor.run {
@@ -1223,6 +1230,7 @@ private enum Keys {
     static let outputFormats = "outputFormats"
     static let sourceLanguage = "sourceLanguage"
     static let translatesToEnglish = "translatesToEnglish"
+    static let usesTextContext = "usesTextContext"
     static let vadSettings = "vadSettings"
     static let huggingFaceDownloadSource = "huggingFaceDownloadSource"
     static let customHuggingFaceEndpoint = "customHuggingFaceEndpoint"

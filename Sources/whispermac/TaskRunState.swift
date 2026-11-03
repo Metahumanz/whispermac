@@ -195,5 +195,6 @@ struct AppConfigurationSnapshot: Equatable {
     let outputFormats: Set<OutputFormat>
     let sourceLanguage: String
     let translatesToEnglish: Bool
+    let usesTextContext: Bool
     let vadSettings: VADSettings
 }

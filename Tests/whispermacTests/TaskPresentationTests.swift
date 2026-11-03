@@ -7,6 +7,40 @@ import Testing
 /// batch transcription, cancelling, and the three terminal outcomes without
 /// inventing per-file progress or treating 100% as success.
 struct TaskPresentationTests {
+    @MainActor
+    @Test
+    func downloadAvailabilityTracksSelectedSourceAndEnvironmentOverride() {
+        var suiteNames: [String] = []
+        defer { suiteNames.forEach { UserDefaults(suiteName: $0)?.removePersistentDomain(forName: $0) } }
+
+        func makeModel(
+            source: HuggingFaceDownloadSource,
+            customEndpoint: String = "",
+            environment: [String: String] = [:]
+        ) -> AppModel {
+            let suiteName = "DownloadAvailability-\(UUID().uuidString)"
+            suiteNames.append(suiteName)
+            let defaults = UserDefaults(suiteName: suiteName)!
+            defaults.set(source.rawValue, forKey: "huggingFaceDownloadSource")
+            defaults.set(customEndpoint, forKey: "customHuggingFaceEndpoint")
+            return AppModel(defaults: defaults, huggingFaceEnvironment: environment)
+        }
+
+        #expect(makeModel(source: .official).canDownloadRuntimeAssets)
+        #expect(makeModel(source: .hfMirror).canDownloadRuntimeAssets)
+        #expect(makeModel(source: .custom, customEndpoint: "https://mirror.example").canDownloadRuntimeAssets)
+        #expect(!makeModel(source: .custom, customEndpoint: "ftp://invalid.example").canDownloadRuntimeAssets)
+        #expect(makeModel(
+            source: .custom,
+            customEndpoint: "ftp://invalid.example",
+            environment: [HuggingFaceEndpoint.environmentVariableName: "https://override.example"]
+        ).canDownloadRuntimeAssets)
+        #expect(!makeModel(
+            source: .official,
+            environment: [HuggingFaceEndpoint.environmentVariableName: "ftp://invalid.example"]
+        ).canDownloadRuntimeAssets)
+    }
+
     @Test
     func activeDownloadCancellationRoutesToActualDownloadKind() {
         #expect(TaskPresentation.activeDownload(isDownloadingRuntime: false, isDownloadingVADModel: true) == .vadModel)

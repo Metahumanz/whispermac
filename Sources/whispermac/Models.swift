@@ -47,6 +47,22 @@ struct VADSettings: Codable, Equatable, Sendable {
     }
 }
 
+enum HuggingFaceDownloadSource: String, CaseIterable, Codable, Identifiable, Sendable {
+    case official
+    case hfMirror
+    case custom
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .official: L.tr("hf.source.official")
+        case .hfMirror: L.tr("hf.source.mirror")
+        case .custom: L.tr("hf.source.custom")
+        }
+    }
+}
+
 enum OutputFormat: String, CaseIterable, Hashable, Sendable {
     case txt
     case srt

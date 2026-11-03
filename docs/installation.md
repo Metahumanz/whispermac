@@ -36,7 +36,8 @@ xattr -cr /path/to/WhisperMac.app
 6. Open WhisperMac.
 7. Confirm the `whisper-cli` path points to the bundled runtime.
 8. Use `Model File` to choose your local `ggml-large-v3-turbo.bin`.
-9. Add media files, choose output formats, and start transcribing.
+9. Add media files or drag a folder into the workspace; folders are scanned
+   recursively for supported media. Choose output formats and start transcribing.
 
 Notes:
 
@@ -111,6 +112,14 @@ runtime/
 WhisperMac can also point to model files outside the app bundle, which is why
 the release archive works even when models are not packaged inside the app.
 
+## Media Folder Drop
+
+Drop one or more media files, folders, or a mixture onto the workspace. Each
+folder is scanned recursively and supported files are added to the queue in a
+stable path order. Hidden items, package contents, and symlink directories are
+skipped. The scanner runs in the background, so large folders do not block the
+interface. Existing queue entries and duplicate paths are ignored.
+
 ## Silero VAD
 
 VAD is off by default so existing installations keep their previous
@@ -126,6 +135,22 @@ The default model location is:
 ```text
 ~/Library/Application Support/WhisperMac/runtime/Models/ggml-silero-v6.2.0.bin
 ```
+
+With the VAD model path left on automatic detection, Settings displays the
+resolved file path without changing the saved preference. Use **Choose…** to
+select a model manually, or **Restore automatic detection** to return to the
+default/bundled model search.
+
+### Hugging Face download sources
+
+In **Settings → Model Downloads**, select **Official Hugging Face** (the
+default), **HF-Mirror**, or **Custom** and enter an HTTP/HTTPS base URL. This
+single endpoint is used for Whisper model files, Core ML encoder archives,
+Silero VAD, and repository checksum metadata. A custom URL must include a host;
+invalid URLs disable downloads instead of silently falling back to the official
+host. Existing installations that stored the legacy `hfEndpoint` setting are
+migrated automatically. The environment variable
+`WHISPERMAC_HF_ENDPOINT` overrides the UI selection for all of these downloads.
 
 You can select a model at another path in **Settings → Transcription Paths →
 VAD Model**, or download it manually:

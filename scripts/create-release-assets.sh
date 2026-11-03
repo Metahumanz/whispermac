@@ -40,7 +40,7 @@ codesign --force --deep -s - "$APP_STAGE"
 codesign --verify --deep --strict "$APP_STAGE"
 
 ditto -c -k --sequesterRsrc --keepParent "$APP_STAGE" "$ZIP_PATH"
-shasum -a 256 "$ZIP_PATH" > "$SHA_PATH"
+(cd "$ASSET_DIR" && shasum -a 256 "$(basename "$ZIP_PATH")" > "$(basename "$SHA_PATH")")
 
 # Prove the shipped artifact is signed: unzip and verify the extracted app.
 ZIP_CHECK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/whispermac-zip-check.XXXXXX")"

@@ -11,9 +11,12 @@ RUNTIME_DIR="$RESOURCES_DIR/runtime"
 ICON_ICNS="$ROOT/Sources/whispermac/Resources/AppIcon.icns"
 WHISPER_BIN_DIR="$ROOT/.build-tools/whisper.cpp/build/bin"
 
-# App version: WHISPERMAC_VERSION env wins, else the latest git tag
+# App version: WHISPERMAC_VERSION env wins, then VERSION, then the latest git tag
 # (leading "v" stripped), else a fallback for tarball builds without git.
 VERSION="${WHISPERMAC_VERSION:-$(git -C "$ROOT" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)}"
+if [[ -z "${WHISPERMAC_VERSION:-}" && -f "$ROOT/VERSION" ]]; then
+  VERSION="$(cat "$ROOT/VERSION")"
+fi
 VERSION="${VERSION:-0.1.1}"
 
 # Build number: commit count, with a fallback for tarball builds.

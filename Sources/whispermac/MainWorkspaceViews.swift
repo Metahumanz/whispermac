@@ -221,6 +221,7 @@ struct SetupWorkspaceView: View {
                             .textSelection(.enabled)
                         Button(L.tr("vad.download")) { model.downloadVADModel() }
                             .buttonStyle(.borderedProminent)
+                            .disabled(!model.canDownloadRuntimeAssets)
                         optionsForm
                     }
                 case .ready:
@@ -245,21 +246,32 @@ struct SetupWorkspaceView: View {
 
     private var dropInvite: some View {
         VStack(spacing: 8) {
-            Image(systemName: "arrow.up.doc")
-                .font(.system(size: UITypographyScale.scaled(40)))
-                .foregroundStyle(.secondary)
-            Text(L.tr("empty.drop.title"))
-                .font(.system(size: UITypographyScale.scaled(20), weight: .medium))
-            Text(L.tr("empty.drop.detail"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Button {
-                model.chooseInputFiles()
-            } label: {
-                Label(L.tr("button.add_media"), systemImage: "plus")
+            if model.isScanningMedia {
+                ProgressView()
+                Text(model.mediaAdditionFeedback)
+                    .foregroundStyle(.secondary)
+            } else {
+                Image(systemName: "arrow.up.doc")
+                    .font(.system(size: UITypographyScale.scaled(40)))
+                    .foregroundStyle(.secondary)
+                Text(L.tr("empty.drop.title"))
+                    .font(.system(size: UITypographyScale.scaled(20), weight: .medium))
+                Text(L.tr("empty.drop.detail"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button {
+                    model.chooseInputFiles()
+                } label: {
+                    Label(L.tr("button.add_media"), systemImage: "plus")
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 8)
+                if !model.mediaAdditionFeedback.isEmpty {
+                    Text(model.mediaAdditionFeedback)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.top, 8)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 220)
@@ -290,6 +302,7 @@ struct SetupWorkspaceView: View {
                 defaultsRow(L.tr("label.output_directory"), outputLocationDisplayText(model.outputDirectoryPath))
                 defaultsRow(L.tr("label.export_formats"), formatsSummaryText(model.outputFormats))
                 defaultsRow(L.tr("label.audio_language"), languageDisplayName(forCode: model.sourceLanguage))
+                defaultsRow(L.tr("text_context.title"), model.usesTextContext ? L.tr("common.on") : L.tr("common.off"))
                 defaultsRow(L.tr("vad.title"), model.vadSettings.isEnabled ? L.tr("common.on") : L.tr("common.off"))
             }
         }
@@ -319,6 +332,7 @@ struct SetupWorkspaceView: View {
                 SectionHeader(title: L.tr("options.section.transcribe"))
                 languageRow
                 translateRow
+                textContextRow
             }
 
             Divider()
@@ -431,6 +445,18 @@ struct SetupWorkspaceView: View {
         }
     }
 
+    private var textContextRow: some View {
+        LabeledRow(title: L.tr("text_context.title")) {
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle(L.tr("text_context.enable"), isOn: $model.usesTextContext)
+                    .disabled(model.isBusy)
+                Text(L.tr("text_context.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private var vadSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: L.tr("vad.title"))
@@ -450,7 +476,7 @@ struct SetupWorkspaceView: View {
                     if !model.hasResolvableVADModel {
                         Button(L.tr("vad.download")) { model.downloadVADModel() }
                             .buttonStyle(.link)
-                            .disabled(model.isBusy)
+                            .disabled(!model.canDownloadRuntimeAssets)
                     }
                 }
 
@@ -523,7 +549,7 @@ struct SetupWorkspaceView: View {
                 readinessWarningRow(text: L.tr("vad.model_missing_short")) {
                     Button(L.tr("vad.download")) { model.downloadVADModel() }
                         .buttonStyle(.bordered)
-                        .disabled(model.isBusy)
+                        .disabled(!model.canDownloadRuntimeAssets)
                 }
             } else if missingBlockers.isEmpty {
                 if model.inputFiles.isEmpty {
@@ -560,6 +586,7 @@ struct SetupWorkspaceView: View {
                             model.startRuntimeDownload()
                         }
                         .buttonStyle(.bordered)
+                        .disabled(!model.canDownloadRuntimeAssets)
                         Button(L.tr("missing.choose_existing_model")) {
                             model.chooseModel()
                         }
@@ -606,6 +633,7 @@ struct MissingModelPanel: View {
                     Label(L.tr("missing.download_default_model"), systemImage: "arrow.down.circle")
                 }
                 .prominent(if: isPrimary)
+                .disabled(!model.canDownloadRuntimeAssets)
 
                 Button(L.tr("missing.choose_existing_model")) {
                     model.chooseModel()
@@ -823,6 +851,7 @@ struct RunWorkspaceView: View {
                     L.tr("label.acceleration_mode"),
                     effectiveAccelerationText(snapshot)
                 )
+                snapshotRow(L.tr("text_context.title"), snapshot.usesTextContext ? L.tr("common.on") : L.tr("common.off"))
                 snapshotRow(L.tr("vad.title"), vadSummary(snapshot.vadSettings))
             }
             .padding(.top, 8)

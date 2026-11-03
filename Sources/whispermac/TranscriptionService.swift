@@ -15,6 +15,7 @@ struct TranscriptionService {
         formats: Set<OutputFormat>,
         sourceLanguage: String,
         translatesToEnglish: Bool,
+        usesTextContext: Bool = false,
         vadSettings: VADSettings = .default,
         onInputStageChange: @escaping @Sendable (Int, TranscriptionStage) async -> Void,
         onStageChange: @escaping @Sendable (TranscriptionStage) async -> Void,
@@ -25,6 +26,12 @@ struct TranscriptionService {
         guard !inputs.isEmpty else { return [] }
 
         let startedAt = Date()
+        let runLog = try? TranscriptionRunLog()
+        if let runLog {
+            await onLog(L.tr("log.diagnostic_file", runLog.url.path))
+        } else {
+            await onLog(L.tr("log.diagnostic_unavailable"))
+        }
         await onLog(L.tr("transcription.start_audio_prep"))
         for directory in Set(inputs.map(\.outputDirectory)) {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
@@ -52,9 +59,10 @@ struct TranscriptionService {
                 input.inputURL.path,
                 wavURLs[index].path,
             ]
-            let audioPreparationResult = try await ShellCommand.run(
+            let audioPreparationResult = try await TranscriptionRunLog.run(
                 executable: audioPreprocessorPath,
                 arguments: audioPreparationArguments,
+                log: runLog,
                 onOutput: { stream, line in
                     guard let filtered = CommandLogFilter.filteredLine(for: stream, tool: .audioPreprocessor, line: line) else {
                         return
@@ -76,15 +84,17 @@ struct TranscriptionService {
             formats: formats,
             sourceLanguage: sourceLanguage,
             translatesToEnglish: translatesToEnglish,
+            usesTextContext: usesTextContext,
             vadSettings: vadSettings
         )
 
         await onStageChange(.transcribing)
         await onLog(L.tr("transcription.start_whisper"))
         let whisperStartedAt = Date()
-        let whisperResult = try await ShellCommand.run(
+        let whisperResult = try await TranscriptionRunLog.run(
             executable: whisperCLIPath,
             arguments: whisperArguments,
+            log: runLog,
             onOutput: { stream, line in
                 if stream == .stdout, let segment = LiveSegmentParser.parse(line) {
                     await onSegment?(segment)

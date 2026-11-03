@@ -80,11 +80,11 @@ struct MainWindowContent: View {
             presentedSheetView(sheet)
         }
         .dropDestination(for: URL.self) { urls, _ in
-            guard !model.isRunning else { return false }
+            guard !model.isRunning, !model.isScanningMedia else { return false }
             model.addMediaURLs(urls)
             return true
         } isTargeted: { targeted in
-            isDropTargeted = targeted && !model.isRunning
+            isDropTargeted = targeted && !model.isRunning && !model.isScanningMedia
         }
         .onAppear {
             model.promptToDownloadMissingRuntimeIfNeeded()
@@ -97,6 +97,7 @@ struct MainWindowContent: View {
             Button(L.tr("button.download_runtime")) {
                 model.startRuntimeDownload()
             }
+            .disabled(!model.canDownloadRuntimeAssets)
             Button(L.tr("button.not_now"), role: .cancel) {
                 model.dismissRuntimeDownloadPrompt()
             }
@@ -136,7 +137,7 @@ struct MainWindowContent: View {
             } label: {
                 Label(L.tr("button.add_media"), systemImage: "plus")
             }
-            .disabled(model.isRunning)
+            .disabled(model.isRunning || model.isScanningMedia)
             .keyboardShortcut("o")
             .accessibilityHint(Text(model.isRunning ? L.tr("queue.locked") : L.tr("empty.drop.detail")))
 
@@ -175,7 +176,7 @@ struct MainWindowContent: View {
 struct TaskQueueView: View {
     @EnvironmentObject private var model: AppModel
 
-    private var isLocked: Bool { model.isRunning }
+    private var isLocked: Bool { model.isRunning || model.isScanningMedia }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -474,9 +475,11 @@ struct PersistentActionBar: View {
     }
 
     private func setupStatusLine(_ readiness: SetupReadiness) -> String {
+        if model.isScanningMedia { return L.tr("media.scanning") }
         if model.isDownloadingRuntime {
             return model.statusText
         }
+        if !model.mediaAdditionFeedback.isEmpty { return model.mediaAdditionFeedback }
         if let reason = model.startDisabledReason {
             return disabledReasonText(reason)
         }
@@ -601,11 +604,13 @@ struct PersistentActionBar: View {
             model.startTranscription()
         }
         .buttonStyle(.borderedProminent)
-        .disabled(model.startDisabledReason != nil)
+        .disabled(model.startDisabledReason != nil || model.isScanningMedia)
         .accessibilityValue(Text(setupAccessibilityValue))
     }
 
     private var setupAccessibilityValue: String {
+        if model.isScanningMedia { return L.tr("media.scanning") }
+        if !model.mediaAdditionFeedback.isEmpty { return model.mediaAdditionFeedback }
         if let reason = model.startDisabledReason {
             return disabledReasonText(reason)
         }
@@ -652,9 +657,7 @@ struct SettingsSheet: View {
                     pathRow(title: L.tr("field.model_file"), text: $model.modelPath) {
                         model.chooseModel()
                     }
-                    pathRow(title: L.tr("vad.model_path"), text: $model.vadSettings.modelPath) {
-                        model.chooseVADModel()
-                    }
+                    vadModelPathRow
                     HStack(spacing: 8) {
                         StatusDot(color: model.hasResolvableVADModel ? Color(nsColor: .systemGreen) : Color(nsColor: .systemOrange))
                         Text(model.hasResolvableVADModel
@@ -671,7 +674,7 @@ struct SettingsSheet: View {
                             }
                         } else if !model.hasResolvableVADModel {
                             Button(L.tr("vad.download")) { model.downloadVADModel() }
-                                .disabled(model.isBusy)
+                                .disabled(!model.canDownloadRuntimeAssets)
                         }
                     }
                     if model.isDownloadingVADModel {
@@ -686,6 +689,48 @@ struct SettingsSheet: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)
                         }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            GroupBox(L.tr("hf.section")) {
+                VStack(alignment: .leading, spacing: 10) {
+                    LabeledRow(title: L.tr("hf.source.label")) {
+                        Picker(L.tr("hf.source.label"), selection: $model.huggingFaceDownloadSource) {
+                            ForEach(HuggingFaceDownloadSource.allCases) { source in
+                                Text(source.displayName).tag(source)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        .frame(width: 230, alignment: .leading)
+                        .disabled(model.isBusy)
+                    }
+                    if model.huggingFaceDownloadSource == .custom {
+                        LabeledRow(title: L.tr("hf.endpoint.custom")) {
+                            TextField("https://example.com", text: $model.customHuggingFaceEndpoint)
+                                .textFieldStyle(.roundedBorder)
+                                .disabled(model.isBusy)
+                        }
+                    }
+                    LabeledRow(title: L.tr("hf.endpoint.current")) {
+                        Text(model.huggingFaceEndpointDisplayText)
+                            .font(.callout.monospaced())
+                            .foregroundStyle(model.isHuggingFaceEndpointInvalid ? Color(nsColor: .systemOrange) : .secondary)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if model.isHuggingFaceEndpointInvalid {
+                        Text(L.tr("hf.endpoint.invalid_detail"))
+                            .font(.caption)
+                            .foregroundStyle(Color(nsColor: .systemOrange))
+                    }
+                    if model.hasHuggingFaceEnvironmentOverride {
+                        Text(L.tr("hf.endpoint.environment_override", HuggingFaceEndpoint.environmentVariableName))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .padding(.vertical, 4)
@@ -752,6 +797,33 @@ struct SettingsSheet: View {
         }
     }
 
+    private var vadModelPathRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            LabeledRow(title: L.tr("vad.model_path")) {
+                HStack(spacing: 8) {
+                    TextField(L.tr("vad.model_path_unavailable"), text: .constant(model.vadModelDisplayPath))
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(true)
+                        .textSelection(.enabled)
+                    Button(L.tr("button.choose")) { model.chooseVADModel() }
+                        .disabled(model.isBusy)
+                }
+            }
+            HStack(spacing: 8) {
+                Text(model.isVADModelUsingAutomaticPath ? L.tr("vad.path_automatic") : L.tr("vad.path_manual"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if !model.vadSettings.modelPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Button(L.tr("vad.restore_automatic")) { model.restoreAutomaticVADModel() }
+                        .buttonStyle(.link)
+                        .font(.caption)
+                        .disabled(model.isBusy)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     @ViewBuilder private var downloadStatusRow: some View {
         if model.isDownloadingRuntime {
             HStack(spacing: 12) {
@@ -775,6 +847,7 @@ struct SettingsSheet: View {
                 Button(L.tr("button.download_runtime")) {
                     model.startRuntimeDownload()
                 }
+                .disabled(!model.canDownloadRuntimeAssets)
                 Text(L.tr("privacy.download"))
                     .font(.caption)
                     .foregroundStyle(.secondary)

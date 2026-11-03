@@ -162,8 +162,12 @@
 "privacy.local" = "ファイルはこの Mac でのみ処理されます。";
 "empty.title" = "文字起こし準備";
 "empty.subtitle" = "メディアを追加して出力オプションを選び、開始してください。";
-"empty.drop.title" = "メディアファイルをここにドラッグ";
-"empty.drop.detail" = "MP4、M4A、MP3、WAV などに対応";
+"empty.drop.title" = "メディアファイルまたはフォルダをここにドロップ";
+"empty.drop.detail" = "フォルダ内を再帰的にスキャンし、MP4、M4A、MP3、WAV などを追加します";
+"media.scanning" = "メディアファイルをスキャン中…";
+"media.added_count" = "メディアファイルを %lld 件追加しました";
+"media.no_supported_files" = "選択した項目に対応するメディアファイルがありません";
+"media.no_new_files" = "追加できる新しいメディアファイルはありません";
 "empty.defaults.title" = "タスクのデフォルト設定";
 "options.title" = "タスクオプション";
 "options.adjust" = "オプションを調整";
@@ -263,5 +267,30 @@
 "vad.speech_pad" = "音声前後の拡張";
 "vad.milliseconds" = "%lld ミリ秒";
 "vad.model_path" = "VAD モデル";
+"vad.model_path_unavailable" = "有効なモデルが見つかりません";
+"vad.path_automatic" = "自動検出";
+"vad.path_manual" = "手動指定";
+"vad.restore_automatic" = "自動検出に戻す";
 "vad.model_available" = "モデルを利用できます：%@";
+"hf.section" = "モデルのダウンロード";
+"hf.source.label" = "Hugging Face のダウンロード元";
+"hf.source.official" = "公式 Hugging Face";
+"hf.source.mirror" = "HF-Mirror";
+"hf.source.custom" = "カスタム";
+"hf.endpoint.custom" = "カスタム URL";
+"hf.endpoint.current" = "現在のアドレス";
+"hf.endpoint.invalid" = "ダウンロード先が無効です";
+"hf.endpoint.invalid_detail" = "ホスト名を含む有効な HTTP または HTTPS URL を入力してください。修正されるまでダウンロードは無効です。";
+"hf.endpoint.environment_override" = "%@ が設定されているため、すべてのモデルとメタデータのダウンロードでこの設定より優先されます。";
 "vad.summary" = "有効 · しきい値 %@ · 最短音声 %@ ミリ秒 · 最短無音 %@ ミリ秒 · 拡張 %@ ミリ秒";
+
+"log.diagnostic_file" = "診断ログ：%@";
+"log.diagnostic_unavailable" = "診断ログを作成できませんでした。文字起こしは続行します。";
+
+"text_context.title" = "前の区間のテキスト";
+
+"text_context.enable" = "前の区間の認識結果を参照";
+
+"text_context.hint" = "区間間の用語の一貫性を改善できますが、誤認識が繰り返される場合があります。初期設定はオフです。長い録音で繰り返しが発生する場合はオフにしてください。";
+
+"log.text_context" = "前の区間のテキスト：%@";

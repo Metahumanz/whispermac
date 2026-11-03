@@ -57,7 +57,7 @@ jobs:
           ./scripts/build-app-bundle.sh
           codesign --verify --deep --strict dist/WhisperMac.app
           test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' dist/WhisperMac.app/Contents/Info.plist)" = "$WHISPERMAC_VERSION"
-          lipo -verify_arch arm64 dist/WhisperMac.app/Contents/MacOS/WhisperMac
+          lipo dist/WhisperMac.app/Contents/MacOS/WhisperMac -verify_arch arm64
           dist/WhisperMac.app/Contents/Resources/runtime/bin/whisper-cli --help
 
       - name: Create and verify distributable assets
